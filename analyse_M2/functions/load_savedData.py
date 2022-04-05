@@ -327,7 +327,37 @@ def load_tfr_data(liste_rawPath,suffixe):
     return liste_tfr
     
 
-def load_data_postICA_postdropBad(liste_rawPath,suffixe):
+# def load_data_postICA_postdropBad(liste_rawPath,suffixe):
+#     if suffixe != "":
+#         suffixe = "-" + suffixe
+#     import os
+#     liste_signaux_loades = []   
+#     i = 0
+#     for path in liste_rawPath:
+#         path_sujet = liste_rawPath[i]
+#         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+#         path_raccourci_split = path_raccourci.split('/')
+#         print(path_raccourci_split)
+#         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
+#         print(directory)
+#         if os.path.exists(directory):
+#             try:
+#                 signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")
+#             except OSError as e:
+#                 print(e.errno)
+#         else:
+#             print("sujet "+str(i)+" non traité")
+#         liste_signaux_loades.append(signal)
+#         i += 1
+#     return liste_signaux_loades
+
+
+
+def load_data_postICA_postdropBad_windows(liste_rawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     if suffixe != "":
         suffixe = "-" + suffixe
     import os
@@ -336,9 +366,11 @@ def load_data_postICA_postdropBad(liste_rawPath,suffixe):
     for path in liste_rawPath:
         path_sujet = liste_rawPath[i]
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
-        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
+        path_raccourci_split = path_raccourci.split(charac_split)
+        print(path_raccourci_split)
+        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + '/'
         print(directory)
+        print(os.path.exists(directory))
         if os.path.exists(directory):
             try:
                 signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")

@@ -18,8 +18,8 @@ from functions.load_savedData import *
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
 #pour se placer dans les donnees lustre
-os.chdir("../../../../../../")
-lustre_data_dir = "iss02/cenir/analyse/meeg/BETAPARK/_RAW_DATA"
+os.chdir("../../../../")
+lustre_data_dir = "_RAW_DATA"
 lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
@@ -28,11 +28,11 @@ liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFina
 liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
-EpochDataMain = load_data_postICA_postdropBad(liste_rawPathMain,"") 
+EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain,"",True) 
 
-EpochDataPendule = load_data_postICA_postdropBad(liste_rawPathPendule,"")
+EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule,"",True) 
 
-EpochDataMainIllusion = load_data_postICA_postdropBad(liste_rawPathMainIllusion,"")
+EpochDataMainIllusion = load_data_postICA_postdropBad_windows(liste_rawPathMainIllusion,"",True) 
 
 #===================set montage===IMPORTANT!!!!=======================
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
