@@ -18,8 +18,8 @@ from functions.load_savedData import *
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
 #pour se placer dans les donnees lustre
-os.chdir("../../../../../../")
-lustre_data_dir = "iss02/cenir/analyse/meeg/BETAPARK/_RAW_DATA"
+os.chdir("../../../../")
+lustre_data_dir = "_RAW_DATA"
 lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
@@ -30,23 +30,30 @@ liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFin
 
  
 #load previous data
-EpochDataMain = load_data_postICA_postdropBad(liste_rawPathMain,"") 
+# EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain,"",True) 
 
-EpochDataPendule = load_data_postICA_postdropBad(liste_rawPathPendule,"")
+# EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule,"",True) 
 
-EpochDataMainIllusion = load_data_postICA_postdropBad(liste_rawPathMainIllusion,"")
+# EpochDataMainIllusion = load_data_postICA_postdropBad_windows(liste_rawPathMainIllusion,"",True) 
 
 #===================set montage===IMPORTANT!!!!=======================
-montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
-for epochs in EpochDataMain:
-    if epochs!=None:
-        epochs.set_montage(montageEasyCap)
-for epochs in EpochDataPendule:
-    if epochs!=None:
-        epochs.set_montage(montageEasyCap)
-for epochs in EpochDataMainIllusion:
-    if epochs!=None:
-        epochs.set_montage(montageEasyCap)
+# montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
+# for epochs in EpochDataMain:
+#     if epochs!=None:
+#         epochs.set_montage(montageEasyCap)
+# for epochs in EpochDataPendule:
+#     if epochs!=None:
+#         epochs.set_montage(montageEasyCap)
+# for epochs in EpochDataMainIllusion:
+#     if epochs!=None:
+#         epochs.set_montage(montageEasyCap)
+        
+def load_indivEpochData(index_sujet,liste_rawPath):
+    epoch_sujet = load_data_postICA_postdropBad_windows(liste_rawPath[index_sujet:index_sujet+1],"",True)[0]
+    montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
+    if epoch_sujet!=None:
+        epoch_sujet.set_montage(montageEasyCap)
+    return epoch_sujet
   
 #==========acceder aux essais jetes par sujet============
 jetes_main = [
@@ -68,35 +75,29 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
     freqs = np.arange(3, 85, pasFreq)
     n_cycles = freqs 
     i = num_sujet
+    my_cmap = discrete_cmap(13, 'RdBu_r')
     
     #pendule
-    epochs_sujet = EpochDataPendule[i]
+    epochs_sujet = load_indivEpochData(i,liste_rawPathPendule)
     print(epochs_sujet)
     epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
     print("downsampling...") #decim= 5 verifier si resultat pareil qu'avec down sampling
-    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
+    power_sujet_pendule = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
     print("computing power...")
-    power_sujet_pendule = power_sujet
     
     #main
-    epochs_sujet = EpochDataMain[i]
+    epochs_sujet = load_indivEpochData(i,liste_rawPathMain)
     epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
     print("downsampling...") #decim= 5 verifier si resultat pareil qu'avec down sampling
-    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
+    power_sujet_main = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
     print("computing power...")
-    power_sujet_main = power_sujet
     
     #mainIllusion
-    epochs_sujet = EpochDataMainIllusion[i]
+    epochs_sujet = load_indivEpochData(i,liste_rawPathMainIllusion)
     epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
     print("downsampling...") #decim= 5 verifier si resultat pareil qu'avec down sampling
-    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
+    power_sujet_mainIllusion = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
     print("computing power...")
-    power_sujet_mainIllusion = power_sujet
-    
-    dixEssais_TFR_test_pendule = power_sujet_pendule#on ne calcule qu'une seule puissance
-    dixEssais_TFR_test_main = power_sujet_main
-    dixEssais_TFR_test_mainIllusion = power_sujet_mainIllusion
     
     dureePreBaseline = 3 #3
     dureePreBaseline = - dureePreBaseline
@@ -117,7 +118,7 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
         if i+1 not in essaisJetes_pendule_sujet:#gerer les epochs jetes dans l'affichage
         #dixEssais_TFR_test[i].average().plot(picks="C3",baseline=(-3,-1),mode='logratio',fmax=40,vmin=-0.3,vmax=0.3)
         #dixEssais_TFR_test[i].average().plot_topomap(baseline=(-3,-1),mode='logratio',fmin=8,fmax=30,tmin=2,tmax=25)#,vmin=-0.3,vmax=0.3)
-            dixEssais_TFR_test_pendule[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[0,i],vmin=vmin,vmax=vmax)
+            power_sujet_pendule[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[0,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
         else:
             print("essai jete num"+str(i+1))
             delta += 1
@@ -125,24 +126,24 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
     delta = 0   
     for i in range(10):
         if i+1 not in essaisJetes_main_sujet:
-            dixEssais_TFR_test_main[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[1,i],vmin=vmin,vmax=vmax)
+            power_sujet_main[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[1,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
         else:
             print("essai jete num"+str(i+1))
             delta += 1
     delta = 0   
     for i in range(10):  #colorbar = False pour ne pas plot toutes les colorbar
         if i+1 not in essaisJetes_mainIllusion_sujet:
-            dixEssais_TFR_test_mainIllusion[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[2,i],vmin=vmin,vmax=vmax)
+            power_sujet_mainIllusion[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[2,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
         else:
             print("essai jete num"+str(i+1))
             delta += 1
     return True
 
-get_30essais_sujet_i(num_sujet=22,freqMin=3,freqMax=85,pasFreq=1,
-                     sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule)
-raw_signal.plot(block=True)
+# get_30essais_sujet_i(num_sujet=22,freqMin=3,freqMax=85,pasFreq=1,
+#                      sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule)
+# raw_signal.plot(block=True)
 
-for i in range(6,12):#5 par 5 pour ne pas saturer la RAM
+for i in range(10):#5 par 5 pour ne pas saturer la RAM
     get_30essais_sujet_i(num_sujet=i,freqMin=8,freqMax=30,pasFreq=1,
                      sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule)
 raw_signal.plot(block=True)
