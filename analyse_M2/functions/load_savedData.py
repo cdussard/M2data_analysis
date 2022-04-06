@@ -367,10 +367,8 @@ def load_data_postICA_postdropBad_windows(liste_rawPath,suffixe,windows):
         path_sujet = liste_rawPath[i]
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
         path_raccourci_split = path_raccourci.split(charac_split)
-        print(path_raccourci_split)
         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + '/'
         print(directory)
-        print(os.path.exists(directory))
         if os.path.exists(directory):
             try:
                 signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")

@@ -13,6 +13,7 @@ import numpy as np
 # importer les fonctions definies par moi 
 from handleData_subject import createSujetsData
 from functions.load_savedData import *
+#import gc#garbage collector for memory leaks
 
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
@@ -51,17 +52,22 @@ jetes_mainIllusion = [
     ]
 
 def compute_condition_power(i,liste_raw,essaisJetes,freqs,n_cycles):
+    print("je suis compute_condition_power")
     epochs_sujet = load_indivEpochData(i,liste_raw)
     print(epochs_sujet)
-    epochs_sujet = epochs_sujet.resample(250., npad='auto') 
     print("downsampling...") #decim= 5 verifier si resultat pareil qu'avec down sampling
-    power_sujet = mne.time_frequency.tfr_morlet(epochs_sujet,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
+    epochs_sujet = epochs_sujet.resample(250., npad='auto') 
     print("computing power...")
-    del epochs_sujet
+    power_sujet = mne.time_frequency.tfr_morlet(epochs_sujet,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
+    # del epochs_sujet
+    # gc.collect()
     return power_sujet
 
 def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap):
+    print("je suis plot_condition_power")
     delta = 0  
+    print("essais jetes plot")
+    print(essaisJetes)
     for i in range(10):
         if i+1 not in essaisJetes:#gerer les epochs jetes dans l'affichage
             power_sujet[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[num_ax,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
@@ -71,7 +77,7 @@ def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,fr
             
     return True
 
-def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_main,sujets_epochs_jetes_mainIllusion,sujets_epochs_jetes_pendule):
+def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_sujet,essaisJetes_mainIllusion_sujet,essaisJetes_pendule_sujet):
     freqs = np.arange(3, 85, pasFreq)
     n_cycles = freqs 
     i = num_sujet
@@ -81,9 +87,6 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
     vmax = 0.75
     tmin = 2
     tmax = 25
-    essaisJetes_main_sujet = sujets_epochs_jetes_main[i]
-    essaisJetes_pendule_sujet = sujets_epochs_jetes_pendule[i]
-    essaisJetes_mainIllusion_sujet = sujets_epochs_jetes_mainIllusion[i]
     dureePreBaseline = 3 #3
     dureePreBaseline = - dureePreBaseline
     dureeBaseline = 2.0 #2.0
@@ -92,9 +95,6 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
     mode = 'zscore'    
     freqs = np.arange(3, 85, 1)
     n_cycles = freqs 
-
-    #fig,axs = plot_all_conditions_power(freqMin,freqMax,tmin,tmax,vmin,vmax,my_cmap,essaisJetes_main_sujet,essaisJetes_mainIllusion_sujet,essaisJetes_pendule_sujet,liste_rawPathPendule,liste_rawPathMain,liste_rawPathMainIllusion)
-    
     #pendule
     power_sujet_pendule = compute_condition_power(i,liste_rawPathPendule,essaisJetes_pendule_sujet,freqs,n_cycles)
     plot_condition_power(power_sujet_pendule,0,essaisJetes_pendule_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
@@ -106,7 +106,15 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
     #mainIllusion
     power_sujet_mainIllusion = compute_condition_power(i,liste_rawPathMainIllusion,essaisJetes_mainIllusion_sujet,freqs,n_cycles)
     plot_condition_power(power_sujet_mainIllusion,2,essaisJetes_mainIllusion_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
+    if num_sujet>2:
+        num_sujet_reel = num_sujet + 2
+    elif num_sujet == 0   :
+           num_sujet_reel = 0
+    elif num_sujet <3:
+        num_sujet_reel = num_sujet + 1
+ 
    
+    fig.suptitle('Sujet n°'+str(num_sujet_reel), fontsize=16)
     return fig
 
 # get_30essais_sujet_i(num_sujet=22,freqMin=3,freqMax=85,pasFreq=1,
@@ -114,11 +122,51 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,sujets_epochs_jetes_m
 # raw_signal.plot(block=True)
 
 figs_stock = []
-for i in range(0,1):#5 par 5 pour ne pas saturer la RAM
+for i in range(10):#5 par 5 pour ne pas saturer la RAM
+    print(i)
+    suj_jetes_main = jetes_main[i]
+    suj_jetes_mainIllusion = jetes_mainIllusion[i]
+    suj_jetes_pendule = jetes_pendule[i]
+    print("jete main")
+    print(suj_jetes_main)
+    print("jete mainIllusion")
+    print(suj_jetes_mainIllusion)
+    print("jete pendule")
+    print(suj_jetes_pendule)
     figs_stock.append(get_30essais_sujet_i(num_sujet=i,freqMin=8,freqMax=30,pasFreq=1,
-                     sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule))
+                     essaisJetes_main_sujet=suj_jetes_main,essaisJetes_mainIllusion_sujet=suj_jetes_mainIllusion,essaisJetes_pendule_sujet=suj_jetes_pendule))
+num_sujet = 19
+sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
+sample_data_dir = pathlib.Path(sample_data_loc)
+date_nom_fichier = dates[num_sujet][-4:]+"-"+dates[num_sujet][3:5]+"-"+dates[num_sujet][0:2]
+raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + "_7-2-b.vhdr")
+
+raw_signal = mne.io.read_raw_brainvision(raw_path_sample,preload=False,eog=('HEOG', 'VEOG'))
+
 raw_signal.plot(block=True)
 
+#diagnose memory leak
+# import tracemalloc
+# tracemalloc.start(10)
+# get_30essais_sujet_i(num_sujet=7,freqMin=8,freqMax=30,pasFreq=1,
+#                       essaisJetes_main_sujet=jetes_main[7],essaisJetes_mainIllusion_sujet=jetes_mainIllusion[7],essaisJetes_pendule_sujet=jetes_pendule[7])
+# snapshot = tracemalloc.take_snapshot()  
+# top_stats = snapshot.statistics('lineno')
+
+# print("[ Top 10 ]")
+# for stat in top_stats[:10]:
+#     print(stat) 
+# top_n(25, snapshot, trace_type='filename')
+    
+# def collect_stats(self):        
+#     self.snapshots.append(tracemalloc.take_snapshot())        
+#     if len(self.snapshots)>1: 
+#         stats = self.snapshots[-1].filter_traces(filters).compare_to(self.snapshots[-2], 'filename')    
+
+# for stat in stats[:10]:                
+#     print("{} new KiB {} total KiB {} new {} total memory blocks: ".format(stat.size_diff/1024, stat.size / 1024, stat.count_diff ,stat.count))                
+# for line in stat.traceback.format():                    
+#     print(line)
 
 # def plot_all_conditions_power(freqMin,freqMax,tmin,tmax,vmin,vmax,my_cmap,essaisJetes_main_sujet,essaisJetes_mainIllusion_sujet,essaisJetes_pendule_sujet,liste_rawPathPendule,liste_rawPathMain,liste_rawPathMainIllusion):
 #     fig,axs = plt.subplots(3,10)
