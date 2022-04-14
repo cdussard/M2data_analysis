@@ -9,6 +9,7 @@ Created on Mon Mar 28 15:42:49 2022
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import mne
 
 def compute_freqBand_condition(fmin,fmax,avpower_cond):
     cond_freq = avpower_cond.copy().crop(fmin =fmin,fmax=fmax)
@@ -167,14 +168,15 @@ def plot_condition(avpower_cond,fig, ax1,ax2,times,nomCondition,ymin,ymax):
     return times_re,arr_C3_freq
     
 
-def plot_allfreqBand_groupByFrequency(avpower_main,avpower_mainIllusion,avpower_pendule):
+def plot_allfreqBand_groupByFrequency(avpower_main,avpower_mainIllusion,avpower_pendule,vmin,vmax):
     times = avpower_main.times #times passed si pas de moyennage tps
-    fig, axs = plt.subplots(4, 2)#autant de lignes que bandes de freq, autant de colonnes que d'electrodes  #les minmax sont individuels si data sans BL
-    res_3_7 = plot_freqBand(3,7,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[0,0],axs[0,1],times,3.4e-11,1.3e-10)#alpha
-    res_8_13 = plot_freqBand(8,13,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[1,0],axs[1,1],times,2.5e-11,7e-11)#alpha
-    res_13_20 = plot_freqBand(13,20,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[2,0],axs[2,1],times,1e-11,5e-11)#low beta
-    #res_20_30 = plot_freqBand(20,30,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[3,0],axs[3,1],times,1.1e-11,5.5e-11)#high beta
-    res_8_30 = plot_freqBand(8,30,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[3,0],axs[3,1],times,1.0e-11,4.5e-11)#high beta
+    fig, axs = plt.subplots(5, 2)#autant de lignes que bandes de freq, autant de colonnes que d'electrodes  #les minmax sont individuels si data sans BL
+    #res_3_7 = plot_freqBand(3,7,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[0,0],axs[0,1],times,vmin,vmax)#3.4e-11,1.3e-10)#alpha
+    res_8_13 = plot_freqBand(8,13,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[0,0],axs[0,1],times,vmin,vmax)#2.5e-11,7e-11)#alpha
+    res_12_15 = plot_freqBand(12,15,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[1,0],axs[1,1],times,vmin,vmax)#2.5e-11,7e-11)#alpha
+    res_13_20 = plot_freqBand(13,20,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[2,0],axs[2,1],times,vmin,vmax)#1e-11,5e-11)#low beta
+    res_20_30 = plot_freqBand(20,30,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[3,0],axs[3,1],times,vmin,vmax)#1.1e-11,5.5e-11)#high beta
+    res_8_30 = plot_freqBand(8,30,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[4,0],axs[4,1],times,vmin,vmax)#1.0e-11,4.5e-11)#high beta
     #plot_freqBand(30,50,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[4,0],axs[4,1])#alpha
     #plot_freqBand(50,80,avpower_main,avpower_mainIllusion,avpower_pendule,fig,axs[5,0],axs[5,1])#alpha
     for ax in axs.flat:
@@ -182,20 +184,21 @@ def plot_allfreqBand_groupByFrequency(avpower_main,avpower_mainIllusion,avpower_
     axs[3,0].set(xlabel='Time(s)')
     axs[3,1].set(xlabel='Time(s)')
 
-    return res_3_7,res_8_13,res_13_20,res_8_30#,res_13_20,res_20_30,
+    return None#res_3_7,res_8_13,res_13_20,res_8_30#,res_13_20,res_20_30,
 
 
-
+# plot_allfreqBand_groupByFrequency(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore)
+# raw_signal.plot(block=True)
 #res_8_13,res_13_20,res_20_30,res_8_30 = plot_allfreqBand_groupByFrequency(av_power_main,av_power_mainIllusion,av_power_pendule)
 
 #raw_signal.plot(block=True)
 
-def plot_allfreqBand_groupByCondition(avpower_main,avpower_mainIllusion,avpower_pendule):
+def plot_allfreqBand_groupByCondition(avpower_main,avpower_mainIllusion,avpower_pendule,vmin,vmax):
     times = avpower_main.times
     fig, axs = plt.subplots(3, 2)#autant de lignes que de conditions, autant de colonnes que d'electrodes
-    plot_condition(avpower_pendule,fig, axs[0,0],axs[0,1],times,"pendule",6e-12,10e-11)
-    plot_condition(avpower_main,fig, axs[1,0],axs[1,1],times,"main",6e-12,10e-11)
-    plot_condition(avpower_mainIllusion,fig, axs[2,0],axs[2,1],times,"mainIllusion",6e-12,10e-11)
+    plot_condition(avpower_pendule,fig, axs[0,0],axs[0,1],times,"pendule",vmin,vmax)#6e-12,10e-11)
+    plot_condition(avpower_main,fig, axs[1,0],axs[1,1],times,"main",vmin,vmax)#6e-12,10e-11)
+    plot_condition(avpower_mainIllusion,fig, axs[2,0],axs[2,1],times,"mainIllusion",vmin,vmax)#6e-12,10e-11)
     for ax in axs.flat:
         ax.set(ylabel='Bandpower')
     axs[2,0].set(xlabel='Time(s)')
@@ -210,11 +213,11 @@ def plot_allfreqBand_groupByCondition(avpower_main,avpower_mainIllusion,avpower_
 #raw_signal.plot(block=True)
 
 #laplacien
-av_power_mainIllusion_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion_C3C4laplacien_noBL_seuil-tfr.h5")[0]
-av_power_main_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main_C3C4laplacien_noBL_seuil-tfr.h5")[0]
-av_power_pendule_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule_C3C4laplacien_noBL_seuil-tfr.h5")[0]
+# av_power_mainIllusion_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion_C3C4laplacien_noBL_seuil-tfr.h5")[0]
+# av_power_main_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main_C3C4laplacien_noBL_seuil-tfr.h5")[0]
+# av_power_pendule_C3laplacien_seuil = mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule_C3C4laplacien_noBL_seuil-tfr.h5")[0]
 #on redefinit la fonction car on a que 2 channels laplaciens virtuels
-def compute_freqBand_condition(fmin,fmax,avpower_cond):
+def compute_freqBand_condition_laplacien(fmin,fmax,avpower_cond):
     print("VERSION LAPLACIEN compute_freqBand_condition")
     cond_freq = avpower_cond.copy().crop(fmin =fmin,fmax=fmax)
     mean_freq_cond = np.mean(cond_freq.data,axis=1)
@@ -222,8 +225,8 @@ def compute_freqBand_condition(fmin,fmax,avpower_cond):
     C4_freq_cond = mean_freq_cond[1,:]
     return C3_freq_cond,C4_freq_cond
 
-yo = plot_allfreqBand_groupByFrequency(av_power_main_C3laplacien_seuil,av_power_mainIllusion_C3laplacien_seuil,av_power_pendule_C3laplacien_seuil)
-raw_signal.plot(block=True)
+#plot_allfreqBand_groupByFrequency(av_power_main_C3laplacien_seuil,av_power_mainIllusion_C3laplacien_seuil,av_power_pendule_C3laplacien_seuil)
+#raw_signal.plot(block=True)
 
-plot_allfreqBand_groupByCondition(av_power_main_C3laplacien_seuil,av_power_mainIllusion_C3laplacien_seuil,av_power_pendule_C3laplacien_seuil)
-raw_signal.plot(block=True)
+#plot_allfreqBand_groupByCondition(av_power_main_C3laplacien_seuil,av_power_mainIllusion_C3laplacien_seuil,av_power_pendule_C3laplacien_seuil)
+#raw_signal.plot(block=True)

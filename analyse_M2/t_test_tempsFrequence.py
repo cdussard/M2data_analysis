@@ -7,8 +7,8 @@ Created on Mon Feb 28 11:08:18 2022
 """
 import pandas as pd
 import scipy
-================= get the data===============
-  from functions.load_savedData import *
+#================= get the data===============
+from functions.load_savedData import *
 
 from handleData_subject import createSujetsData
 from functions.load_savedData import *

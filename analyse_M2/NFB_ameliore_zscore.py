@@ -28,6 +28,15 @@ liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFina
 liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
+num_sujet = 19
+sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
+sample_data_dir = pathlib.Path(sample_data_loc)
+date_nom_fichier = dates[num_sujet][-4:]+"-"+dates[num_sujet][3:5]+"-"+dates[num_sujet][0:2]
+raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + "_7-2-b.vhdr")
+
+raw_signal = mne.io.read_raw_brainvision(raw_path_sample,preload=False,eog=('HEOG', 'VEOG'))
+
+
 EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain,"",True) 
 
 EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule,"",True) 
@@ -58,8 +67,7 @@ for epochs_sujet in EpochData:
     print("========================\nsujet"+str(i))
     epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
     print("downsampling...")
-    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,average=False,return_itc=False)
-    print("computing power...")
+    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,average=False,return_itc=False)#AVERAGE = FALSE
     liste_power_sujets.append(power_sujet)
     i += 1
     
@@ -137,7 +145,7 @@ liste_tfr_mainIllusion = load_tfr_data(liste_rawPathMainIllusion,"")
 
 baseline = (-3, -1)
 for tfr in liste_tfr_mainIllusion:
-    tfr.apply_baseline(baseline=baseline, mode='zscore', verbose=None)
+    tfr.apply_baseline(baseline=baseline, mode='zscore', verbose=None)#les data indiv ne sont pas sauvees
 
 av_power_main_zscoreGlobal = mne.grand_average(liste_tfr_main,interpolate_bads=True)
 av_power_pendule_zscoreGlobal = mne.grand_average(liste_tfr_pendule,interpolate_bads=True)
@@ -198,5 +206,27 @@ avpower_main_moins_mainIllusion_zscoreGlobal.plot_topomap(fmin=8,fmax=30,tmin=2,
 raw_signal.plot(block=True)
 
 
+#================================decours temporels===============================
+#from functions.frequencyPower_displays_vRevueMovingAverage import *#avec moving average
+from functions.frequencyPower_displays import *#sans mA (refaire la fonct avec bool pour faire les 2)
+#zscore single trial
+plot_allfreqBand_groupByFrequency(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore,-0.35,0.9)
+raw_signal.plot(block=True)
 
+plot_allfreqBand_groupByCondition(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore,-0.3,0.9)
+raw_signal.plot(block=True)
+
+#========zscore average trial=========
+
+plot_allfreqBand_groupByFrequency(av_power_main_zscoreGlobal,av_power_mainIllusion_zscoreGlobal,av_power_pendule_zscoreGlobal,-1.6,1.2)
+plot_allfreqBand_groupByCondition(av_power_main_zscoreGlobal,av_power_mainIllusion_zscoreGlobal,av_power_pendule_zscoreGlobal,-1.6,1.2)
+raw_signal.plot(block=True)
+#=====sans la moving average=============
+from functions.frequencyPower_displays_vRevueMovingAverage import *
+plot_allfreqBand_groupByFrequency(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore,-0.3,0.5)
+raw_signal.plot(block=True)
+# plot_allfreqBand_groupByCondition(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore,-0.3,0.5)
+# raw_signal.plot(block=True)
+plot_allfreqBand_groupByFrequency(av_power_main_zscoreGlobal,av_power_mainIllusion_zscoreGlobal,av_power_pendule_zscoreGlobal,-1.4,0.8)
+raw_signal.plot(block=True)
 

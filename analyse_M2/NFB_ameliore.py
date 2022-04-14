@@ -13,16 +13,17 @@ import mne
 import numpy as np 
 # importer les fonctions definies par moi 
 from handleData_subject import createSujetsData
+from functions.load_savedData import *
 
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
 #pour se placer dans les donnees lustre
-os.chdir("../../../../../../")
-lustre_data_dir = "iss02/cenir/analyse/meeg/BETAPARK/_RAW_DATA"
+os.chdir("../../../../")
+lustre_data_dir = "_RAW_DATA"
 lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
-from functions.load_savedData import *
+
 
 liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
@@ -323,11 +324,36 @@ avpower_pendule3cond_Moins_2cond.save("../AV_TFR/all_sujets/pendule3cond-2cond-t
 av_power_pendule.save("../AV_TFR/all_sujets/pendule-tfr.h5",overwrite=True)
 av_power_pendule_2cond.save("../AV_TFR/all_sujets/pendule_2cond-tfr.h5",overwrite=True)
 #=============== load data average TFR============================
-av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")
-av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion-tfr.h5")
+av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")[0]
+av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion-tfr.h5")[0]
+av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
 
-av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")
 
+def plot_C3_power(powerObject,timesTrial,timesVibration,fmin,fmax,vmin,vmax):
+    fig,axes = plt.subplots()
+    powerObject.plot(picks="C3",fmin=fmin,fmax=fmax,vmin=vmin,vmax=vmax,axes=axes)
+    if timesTrial:
+        axes.axvline(2, color='green', linestyle='--')
+        axes.axvline(26.9, color='green', linestyle='--')
+    if timesVibration:
+        axes.axvline(6.5, color='black', linestyle='--')
+        axes.axvline(8.3, color='black', linestyle='--')
+        axes.axvline(12.7, color='black', linestyle='--')
+        axes.axvline(14.5, color='black', linestyle='--')
+        axes.axvline(18.92, color='black', linestyle='--')
+        axes.axvline(20.72, color='black', linestyle='--')
+        axes.axvline(25.22, color='black', linestyle='--')
+        axes.axvline(27.02, color='black', linestyle='--')
+    plt.show()
+    return fig
+vmax = 0.42
+vmin = -vmax
+figPendule = plot_C3_power(av_power_pendule,True,False,3,40,vmin,vmax)
+figMain = plot_C3_power(av_power_main,True,False,3,40,vmin,vmax)
+figMainIllusion = plot_C3_power(av_power_mainIllusion,True,True,3,40,vmin,vmax)
+
+raw_signal.plot(block=True)
+    
 
 #================ Plot C3, Cz, C4 power#=====================================
 #temps frequence
@@ -343,6 +369,10 @@ raw_signal.plot(block=True)#debloquer graphes
 avpower_main_moins_pendule = av_power_main - av_power_pendule
 
 avpower_main_moins_mainIllusion = av_power_main - av_power_mainIllusion
+
+avpower_main_moins_pendule.plot(picks="C3")
+avpower_main_moins_mainIllusion.plot(picks="C3")
+raw_signal.plot(block=True)
 
 save_topo_data(avpower_main_moins_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-pendule",False,1.5,25.5,24)
 save_topo_data(avpower_main_moins_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-mainIllusion",False,1.5,25.5,24)

@@ -302,6 +302,36 @@ def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baselin
     print("done saving")
     return True
 
+
+        
+def load_tfr_data_windows(liste_rawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    if suffixe != "":
+        suffixe = "-" + suffixe
+    liste_tfr = []
+    i = 0
+    for path in liste_rawPath:
+        path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../AV_TFR/" + path_raccourci_split[0] + "/"
+        print(directory)
+        if os.path.exists(directory):
+            try:
+                signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+            except OSError as e:
+                print(e.errno)
+        else:
+            print("sujet "+str(i)+" non traité")
+        
+        liste_tfr.append(signal)
+        i += 1
+    liste_tfr = [tfr[0] for tfr in liste_tfr] 
+    return liste_tfr
+
 def load_tfr_data(liste_rawPath,suffixe):
     if suffixe != "":
         suffixe = "-" + suffixe
