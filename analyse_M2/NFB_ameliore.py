@@ -263,11 +263,9 @@ raw_signal.plot(block=True)#debloquer graphes
 av_power_pendule = mne.grand_average(liste_tfr,interpolate_bads=True)
 save_topo_data(av_power_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"pendule",False,1.5,25.5,23)#can be improved with boolean Params for alpha etcliste_tfr,interpolate_bads=True)
 
-
-
 av_power_pendule_2cond = mne.grand_average(tfr_sujets2cond,interpolate_bads=True)
 save_topo_data(avpower_main_moins_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-pendule",False,1.5,25.5,24)
-save_topo_data(avpower_main_moins_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-mainIllusion",False,1.5,25.5,24)e_bads=True)# pop(8) = fichier avec plus petite taille permet de virer l'erreur
+save_topo_data(avpower_main_moins_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-mainIllusion",False,1.5,25.5,24)#e_bads=True)# pop(8) = fichier avec plus petite taille permet de virer l'erreur
 av_power_pendule_3cond = mne.grand_average(tfr_sujets3cond)#,interpolate_bads=True)
 
 avpower_pendule3cond_Moins_2cond = av_power_pendule_3cond - av_power_pendule_2cond
