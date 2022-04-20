@@ -95,10 +95,10 @@ def ANOVA_result(tableauANOVA_moyenne,tableauANOVA_mediane,save,nameSave):
     allERDmean = list(sum(allERDmean,()))
     
     df_mean = pd.DataFrame({'condition': np.tile(["pendule", "main","mainIllusion"],23),#pendule main mainIllusion
-                       'sujet': np.repeat([0,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],3),
+                       'sujet': np.repeat([0,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],3),
                           'ERD':allERDmean})
     df_mediane = pd.DataFrame({'condition': np.tile(["pendule", "main","mainIllusion"],23),
-                       'sujet': np.repeat([0,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],3),
+                       'sujet': np.repeat([0,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],3),
                           'ERD':allERDmediane})
     # df_2cond_mediane = df_mediane[df_mediane["condition"]!=3]
     # df_2cond_mediane_main = df_mediane[df_mediane["condition"]!=1]
@@ -107,7 +107,7 @@ def ANOVA_result(tableauANOVA_moyenne,tableauANOVA_mediane,save,nameSave):
     anovaMean = AnovaRM(data=df_mean, depvar='ERD', subject='sujet', within=['condition']).fit()
     print(anovaMediane)
     print(anovaMean)
-    return anovaMediane,anovaMean
+    return anovaMediane,anovaMean,df_mean,df_mediane
 
 
 #def t_test_result(tableauANOVA_moyenne,tableauANOVA_mediane)
@@ -146,20 +146,20 @@ for band in bandsToTest:
     i+= 1
 
 liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
-
-
 moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"C3")
-anovaMediane_c3_12_15hz,anovaMean_c3_12_15hz = ANOVA_result(med_bandElec_c3_12_15hz,med_bandElec,False,"")
+anovaMediane_c3_12_15hz,anovaMean_c3_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz,False,"")
 
 import ptitprince
 #raincloud plot
 plt.figure()
-dfData = df_mean_c3_12_15Hz
-dfData.to_csv()
+dfData = df_mediane_12_15hz
+dfData.to_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_short_med.csv")
 dfData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_short.csv")
-df_long = pd.DataFrame(moy_bandElec_c3_12_15hz)
-df_long.to_csv("ANOVA_12_15Hz_C3_long.csv")
-ptitprince.RainCloud(data = dfData, x = 'condition', y = 'ERD', orient = 'v',pointplot = True)
+df_long = pd.DataFrame(med_bandElec_c3_12_15hz)
+df_long.to_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
+ptitprince.RainCloud(data = df_mediane_12_15hz, x = 'condition', y = 'ERD', orient = 'v',pointplot = True)
+plt.figure()
+ptitprince.RainCloud(data = df_mean_12_15hz, x = 'condition', y = 'ERD', orient = 'v',pointplot = True)
 raw_signal.plot(block=True)
 
 #t test sur les valeurs
@@ -167,19 +167,22 @@ import scipy
 scipy.stats.ttest_rel(moy_bandElec_c3_12_15hz[:,0],moy_bandElec_c3_12_15hz[:,1])#main vs pendule
 scipy.stats.ttest_rel(moy_bandElec_c3_12_15hz[:,1],moy_bandElec_c3_12_15hz[:,2])#main vs mainIllusion
 
-
+#8-30Hz
 liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
-moy_bandElec_c3_12_16hz,med_bandElec_c3_12_16hz = anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",8,30,2,25,"C3")
-anovaMediane_c3_12_16hz,anovaMean_c3_12_16hz,df_mean_c3_12_16Hz = ANOVA_result(moy_bandElec_c3_12_16hz,med_bandElec_c3_12_16hz,False,"")
-df_long = pd.DataFrame(moy_bandElec_c3_12_16hz)
-dfData = df_mean_c3_12_16Hz
-df_long.to_csv("ANOVA_8_30Hz_C3_long.csv")
-ptitprince.RainCloud(data = dfData, x = 'condition', y = 'ERD', orient = 'v')
-raw_signal.plot(block=True)
+moy_bandElec_c3_8_30hz,med_bandElec_c3_8_30hz = anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",8,30,2.5,26.8,"C3")
+anovaMediane_c3_8_30hz,anovaMean_c3_8_30hz,df_mean_8_30hz,df_mediane_8_30hz = ANOVA_result(moy_bandElec_c3_8_30hz,med_bandElec_c3_8_30hz,False,"")
+dfData = df_mediane_8_30hz
+dfData.to_csv("./data/Jasp_anova/ANOVA_8_30Hz_C3_short_med.csv")
+df_long = pd.DataFrame(med_bandElec_c3_8_30hz)
+df_long.to_csv("./data/Jasp_anova/ANOVA_8_30Hz_C3_long.csv")
+# df_long = pd.DataFrame(moy_bandElec_c3_8_30hz)
+# df_long.to_csv("./data/Jasp_anova/ANOVA_8_30Hz_C3_long.csv")
+# ptitprince.RainCloud(data = dfData, x = 'condition', y = 'ERD', orient = 'v')
+# raw_signal.plot(block=True)
 
 #post hoc 8-30Hz
-scipy.stats.ttest_rel(moy_bandElec_c3_12_16hz[:,0],moy_bandElec_c3_12_16hz[:,1])#main vs pendule
-scipy.stats.ttest_rel(moy_bandElec_c3_12_16hz[:,1],moy_bandElec_c3_12_16hz[:,2])#main vs mainIllusion
+scipy.stats.ttest_rel(moy_bandElec_c3_8_30hz[:,0],moy_bandElec_c3_8_30hz[:,1])#main vs pendule
+scipy.stats.ttest_rel(moy_bandElec_c3_8_30hz[:,1],moy_bandElec_c3_8_30hz[:,2])#main vs mainIllusion
 # tableauANOVA_NoBL_seuil_mean = tableauANOVA
 # pd.DataFrame(tableauANOVA_NoBL_seuil_mean).to_csv("../csv_files/ANOVA_C3_noBL_seuil/tableauANOVA_mean_Seuil_C3_8-30Hz.csv")
 _
