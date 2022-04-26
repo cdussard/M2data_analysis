@@ -153,8 +153,9 @@ import ptitprince
 #raincloud plot
 plt.figure()
 dfData = df_mediane_12_15hz
+douzeQuinzeHzData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
 dfData.to_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_short_med.csv")
-dfData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_short.csv")
+#8dfData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_short_med.csv")
 df_long = pd.DataFrame(med_bandElec_c3_12_15hz)
 df_long.to_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
 ptitprince.RainCloud(data = df_mediane_12_15hz, x = 'condition', y = 'ERD', orient = 'v',pointplot = True)
@@ -188,3 +189,19 @@ scipy.stats.ttest_rel(moy_bandElec_c3_8_30hz[:,1],moy_bandElec_c3_8_30hz[:,2])#m
 _
 # tableauANOVA_NoBL_seuil_med = tableauANOVAmediane
 # pd.DataFrame(tableauANOVA_NoBL_seuil_med).to_csv("../csv_files/ANOVA_C3_noBL_seuil/tableauANOVA_med_Seuil_C3_8-30Hz.csv")
+
+#12-15Hz CP5, CP1, Fc1, FC5
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_CP5_12_15hz,med_bandElec_CP5_12_15hz = anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"CP5")
+anovaMediane_CP5_12_15hz,anovaMean_CP5_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_CP5_12_15hz,med_bandElec_CP5_12_15hz,False,"")
+#0.15;0.12
+
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_CP1_12_15hz,med_bandElec_CP1_12_15hz = anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"CP1")
+anovaMediane_CP1_12_15hz,anovaMean_CP1_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_CP1_12_15hz,med_bandElec_CP1_12_15hz,False,"")
+#0.38 / 0.4
+
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_CP1_12_15hz,med_bandElec_CP1_12_15hz = anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"CP1")
+anovaMediane_CP1_12_15hz,anovaMean_CP1_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_CP1_12_15hz,med_bandElec_CP1_12_15hz,False,"")
+

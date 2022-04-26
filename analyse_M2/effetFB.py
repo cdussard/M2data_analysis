@@ -8,14 +8,10 @@ Created on Mon Oct 11 14:11:23 2021
 import os 
 import seaborn as sns
 import pathlib
-#recuperation des donnees sujet IM seule
-#necessite d'avoir execute handleData_subject.py avant 
+from handleData_subject import createSujetsData
+from functions.load_savedData import *
+from functions.preprocessData_eogRefait import *
 import numpy as np 
-#pour se placer dans les donnees lustre
-os.chdir("../../../../..")
-lustre_data_dir = "cenir/analyse/meeg/BETAPARK/_RAW_DATA"
-lustre_path = pathlib.Path(lustre_data_dir)
-os.chdir(lustre_path)
 
 nom_essai = "4"
 essaisFeedbackSeul = ["pas_enregistre","sujet jeté",
@@ -26,8 +22,15 @@ for sujetpb in sujetsPb:
     allSujetsDispo.remove(sujetpb)
 # essaisFeedbackSeul = [nom_essai for i in range(25)]
 
-    
-liste_rawPathEffetFBseul = createListeCheminsSignaux(essaisFeedbackSeul,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale)
+essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
+
+liste_rawPathEffetFBseul = createListeCheminsSignaux(essaisFeedbackSeul,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+
+#pour se placer dans les donnees lustre
+os.chdir("../../../../")
+lustre_data_dir = "_RAW_DATA"
+lustre_path = pathlib.Path(lustre_data_dir)
+os.chdir(lustre_path)
 
 #ordre inverse au milieu de la manip pr eviter effets ordre)
 
@@ -35,25 +38,25 @@ event_id_mainIllusion = {'Main illusion seule': 26}
 event_id_pendule={'Pendule seul':23}  
 event_id_main={'Main seule': 24}  
 
-nbSujets = 4
-SujetsDejaTraites = 22
+nbSujets = 5
+SujetsDejaTraites = 16
 rawPathEffetFBseul_sujets = liste_rawPathEffetFBseul[SujetsDejaTraites:SujetsDejaTraites+nbSujets]
 
 listeEpochs_main,listeICA,listeEpochs_pendule,listeEpochs_mainIllusion = all_conditions_analysis_FBseul(allSujetsDispo,rawPathEffetFBseul_sujets,
                             event_id_main,event_id_pendule,event_id_mainIllusion,
                             0.1,1,90,[50,100],'Fz')
 
-saveEpochsAfterICA_FBseul(listeEpochs_main,rawPathEffetFBseul_sujets,"main")
-saveEpochsAfterICA_FBseul(listeEpochs_pendule,rawPathEffetFBseul_sujets,"pendule")
-saveEpochsAfterICA_FBseul(listeEpochs_mainIllusion,rawPathEffetFBseul_sujets,"mainIllusion")
-save_ICA_files(listeICA,rawPathEffetFBseul_sujets)
+saveEpochsAfterICA_FBseul(listeEpochs_main,rawPathEffetFBseul_sujets,"main",True)
+saveEpochsAfterICA_FBseul(listeEpochs_pendule,rawPathEffetFBseul_sujets,"pendule",True)
+saveEpochsAfterICA_FBseul(listeEpochs_mainIllusion,rawPathEffetFBseul_sujets,"mainIllusion",True)
+save_ICA_files(listeICA,rawPathEffetFBseul_sujets,True)
 
 #=============== EPOCHS POWER ==========================
-EpochDataMain = load_data_postICA(liste_rawPathEffetFBseul,"main")
+EpochDataMain = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"main",True)
 
-EpochDataPendule = load_data_postICA(liste_rawPathEffetFBseul,"pendule")
+EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"pendule",True)
 
-EpochDataMainIllusion = load_data_postICA(liste_rawPathEffetFBseul,"mainIllusion")
+EpochDataMainIllusion = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"mainIllusion",True)
 
 #===================set montage===IMPORTANT!!!!=======================
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')

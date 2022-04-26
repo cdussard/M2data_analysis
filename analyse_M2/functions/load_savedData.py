@@ -184,19 +184,19 @@ def save_topo_data(power,dureePreBaseline,valeurPostBaseline,path_sujet,mode,nom
     return True
 
 
-
-
-
-
 #save ICA data
-def save_ICA_files(liste_ICA,liste_rawPathmodif):
+def save_ICA_files(liste_ICA,liste_rawPathmodif,windows):
     import matplotlib.pyplot as plt
 #Save files sauvegarde ICA liste_rawPathmodif=liste_rawPath[21:24]
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     i=0
     for ica_to_save in liste_ICA:
         path_sujet = liste_rawPathmodif[i]
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../ICA/" + path_raccourci_split[0] + "/" 
         fig = ica_to_save.plot_components(picks=['eeg'], show=False, verbose=False)
         if not os.path.exists(directory):
@@ -204,7 +204,7 @@ def save_ICA_files(liste_ICA,liste_rawPathmodif):
             
         plt.savefig(directory+ path_raccourci_split[3] +"png")#save components picture
         plt.close(fig)
-        ica_to_save.save(directory+ path_raccourci_split[3][:-1] +"-ica.fif")#save ICA computed
+        ica_to_save.save(directory+ path_raccourci_split[3][:-1] +"-ica.fif",overwrite=True)#save ICA computed
         i += 1 
     print("done saving")
     return True
@@ -249,13 +249,20 @@ def saveEpochsAfterICA_avantdropBad(listeEpochs,liste_rawPath):    #Save files e
     print("done saving")
     return True
 
-def saveEpochsAfterICA_FBseul(listeEpochs,liste_rawPath,nomCond):    #Save files epochs_ICaises
+
+
+def saveEpochsAfterICA_FBseul(listeEpochs,liste_rawPath,nomCond,windows):    #Save files epochs_ICaises
     nomCond = "-" + nomCond
     i=0
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+        
     for signal in listeEpochs:
         path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -421,6 +428,33 @@ def load_data_postICA_preDropbad(liste_rawPath,suffixe):
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
         path_raccourci_split = path_raccourci.split('/')
         directory = "../EPOCH_ICA_avant_dropBad_avant_averageRef/" + path_raccourci_split[0] + "/"
+        print(directory)
+        if os.path.exists(directory):
+            try:
+                signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")
+            except OSError as e:
+                print(e.errno)
+        else:
+            print("sujet "+str(i)+" non traité")
+        liste_signaux_loades.append(signal)
+        i += 1
+    return liste_signaux_loades
+
+def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    if suffixe != "":
+        suffixe = "-" + suffixe
+    import os
+    liste_signaux_loades = []   
+    i = 0
+    for path in liste_rawPath:
+        path_sujet = liste_rawPath[i]
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
         print(directory)
         if os.path.exists(directory):
             try:

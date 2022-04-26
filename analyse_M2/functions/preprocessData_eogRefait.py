@@ -66,7 +66,7 @@ def ICA_preproc(liste_epochsICA,liste_epochsSignal,listeRawPath):
     i = 1
     montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
     for i in range(len(liste_epochsICA)):#a remplacer
-        if len(liste_epochsSignal[i])>1 and len(liste_epochsICA[i])>1:
+        if len(liste_epochsSignal[i])>0 and len(liste_epochsICA[i])>0:
             epochsICASujet = liste_epochsICA[i]
             epochsFiltered = liste_epochsSignal[i]
             epochsICASujet.set_montage(montageEasyCap) #eogSujet = liste_tous_epochs_EOG[i]
@@ -143,17 +143,17 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
               )
     liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch,reject)
     #ICA
-    liste_PostICA_epoch,liste_ICA,listeSujetsRestants = ICA_preproc(liste_epochsPreICA,liste_epochsSignal,listeRawPath)
+    #liste_PostICA_epoch,liste_ICA,listeSujetsRestants = ICA_preproc(liste_epochsPreICA,liste_epochsSignal,listeRawPath)
     #ICA_preproc(listeEpochsPreICA_badElectrodes,listeEpochs_badElectrodes)
     #save ICA et save epochs post correction
     #re-reference
-    listeAverageRef = average_rereference(liste_PostICA_epoch,initial_ref)
+    #listeAverageRef = average_rereference(liste_PostICA_epoch,initial_ref)
     #montage
-    listeMontaged = montage_eeg(listeAverageRef)
+    #listeMontaged = montage_eeg(listeAverageRef)
     #change order electrodes
     #listeEpochs_bonOrdreChannels = change_order_channels(channels,listeAverageRef)
 
-    return listeAverageRef,listeFilteredSignal,liste_ICA,listeSujetsRestants
+    return liste_epochsPreICA,liste_epochsSignal
 
 
 def return_epochs(listeRawPath,lowFreqSignal,high_freq,notch_freqs,event_id,preload):

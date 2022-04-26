@@ -8,50 +8,64 @@ Created on Mon Oct  4 12:48:49 2021
 import os 
 import seaborn as sns
 import pathlib
-#recuperation des donnees sujet obs / exec
-#ici pour obs exec c'est 2-1 avec eventuellement 2-1-b / 2-1-B
-#necessite d'avoir execute handleData_subject.py avant 
+from handleData_subject import createSujetsData
+from functions.load_savedData import *
+from functions.preprocessData_eogRefait import *
 import numpy as np 
+
+
+essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
+
+
+#create liste of file paths
+essaisObsExecIm,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData_obsExec()
+def createListeCheminsSignaux_obsExec(essaisObsExecIm,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates):
+    #ex : pour tous essais mainSeule
+    liste_rawPathObsExec = []
+    listeEssais = essaisObsExecIm
+    print(allSujetsDispo)
+    for num_sujet in allSujetsDispo:
+        print("sujet n° "+str(num_sujet))
+        print("nom essai"+listeEssais[num_sujet])    
+        nom_sujet = listeNumSujetsFinale[num_sujet]
+        if num_sujet in SujetsPbNomFichiers:
+            if num_sujet>0:
+                date_sujet = '19-04-2021'
+            else:
+                date_sujet = '15-04-2021'
+        else:
+            date_sujet = dates[num_sujet]
+        date_nom_fichier = date_sujet[-4:]+"-"+date_sujet[3:5]+"-"+date_sujet[0:2]+"_"
+        dateSession = listeDatesFinale[num_sujet]
+        sample_data_loc = nom_sujet+"/"+listeDatesFinale[num_sujet]+"/eeg"
+        sample_data_dir = pathlib.Path(sample_data_loc)
+        nom_essai = listeEssais[num_sujet].split(",")[0]#pour l'instant on prend le premier de chaque
+        print(nom_essai)
+        raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + nom_essai+".vhdr")#il faudrait recup les epochs et les grouper ?
+        liste_rawPathObsExec.append(raw_path_sample)
+        print("APPENDED")
+        
+            
+    print(len(liste_rawPathObsExec))#cb d'enregistrements recuperes
+    return liste_rawPathObsExec
+
+liste_rawPathObsExec = createListeCheminsSignaux_obsExec(essaisObsExecIm,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+
 #pour se placer dans les donnees lustre
-os.chdir("../../../../..")
-lustre_data_dir = "cenir/analyse/meeg/BETAPARK/_RAW_DATA"
+os.chdir("../../../../")
+lustre_data_dir = "_RAW_DATA"
 lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
-liste_rawPath = []
-nom_essai = "2-1"#on pourrait ajouter les 2-1-b avec un if et try catch pour voir s'ils existent
+eventObs = {'Observation mvt':16}
+liste_epochsPreICA,liste_epochsSignal = pre_process_donnees(liste_rawPathObsExec,1,0.1,90,[50,100],31,'Fz',eventObs,)#que 2 premiers sujets
 
-nombreTotalSujets = 23
-SujetsPbNomFichiers = [0,1,2,3,4,5,6]
-SujetsExclusAnalyse = [1,4]
-SujetsAvecPb = np.unique(SujetsExclusAnalyse)
-allSujetsDispo = [i for i in range(nombreTotalSujets+1)]
-for sujet_pbmatique in SujetsAvecPb:  
-    allSujetsDispo.remove(sujet_pbmatique)
-print(len(allSujetsDispo))
-
-liste_rawPath = []
-for num_sujet in allSujetsDispo:
-    print("sujet n° "+str(num_sujet))
-    nom_sujet = listeNumSujetsFinale[num_sujet]
-    if num_sujet in SujetsPbNomFichiers:
-        if num_sujet>0:
-            date_sujet = '19-04-2021'#modifier le nom du fichier ne suffit pas, la date est ds les vhdr
-        else:
-            date_sujet = '15-04-2021'
-    else:
-        date_sujet = dates[num_sujet]
-    date_nom_fichier = date_sujet[-4:]+"-"+date_sujet[3:5]+"-"+date_sujet[0:2]+"_"
-    dateSession = listeDatesFinale[num_sujet]
-    sample_data_loc = nom_sujet +"/"+listeDatesFinale[num_sujet]+"/eeg"
-    sample_data_dir = pathlib.Path(sample_data_loc)
-    raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + nom_essai+".vhdr")#il faudrait recup les epochs et les grouper ?
-    liste_rawPath.append(raw_path_sample)
-    
-print(liste_rawPath)
-
-listeAverageRef,listeRaw = pre_process_donnees(liste_rawPath,1,80,[50,100],31,'Fz',False,[])#que 2 premiers sujets
-listeICApreproc,listeICA = ICA_preproc(listeAverageRef,listeRaw,[],31,98,False)
+listeICApreproc=[]
+listeICA= []
+for i in range(len(liste_epochsPreICA)):
+    averageRefSignal_i,ICA_i = treat_indiv_data(liste_epochsPreICA[i],liste_epochsSignal[i],'Fz')
+    listeICApreproc.append(averageRefSignal_i)
+    listeICA.append(ICA_i)
 
 #on reprend la fct, j'y comprends rien #en fait on avait un enregistrement par condition et la tout est mixe :)
 #16 = obs, 17 = exec, 18 = IM obs #pb pck 13 = debut affichage video mais jamais capte # en fait 13 est remplace par 19 par le code python :')
