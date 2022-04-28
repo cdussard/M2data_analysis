@@ -272,7 +272,11 @@ def saveEpochsAfterICA_FBseul(listeEpochs,liste_rawPath,nomCond,windows):    #Sa
     return True
 
 
-def save_tfr_data(listeAverageTFR,listerawPath,suffixe):
+def save_tfr_data(listeAverageTFR,listerawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     if suffixe != "":
         suffixe = "-" + suffixe
     i = 0
@@ -280,7 +284,7 @@ def save_tfr_data(listeAverageTFR,listerawPath,suffixe):
         print("saving subj"+str(i))
         path_sujet = listerawPath[i]#attention ne marche que si on a les epochs dans l'ordre
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../AV_TFR/" + path_raccourci_split[0] + "/"
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -321,18 +325,23 @@ def load_tfr_data_windows(liste_rawPath,suffixe,windows):
     liste_tfr = []
     i = 0
     for path in liste_rawPath:
+        print("path")
+        print(path)
         path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
         path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../AV_TFR/" + path_raccourci_split[0] + "/"
+        print("directory")
         print(directory)
+        print(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+    
         if os.path.exists(directory):
-            try:
-                signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
-            except OSError as e:
-                print(e.errno)
+             try:
+                 signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+             except OSError as e:
+                 print(e.errno)
         else:
-            print("sujet "+str(i)+" non traité")
+             print("sujet "+str(i)+" non traité")
         
         liste_tfr.append(signal)
         i += 1

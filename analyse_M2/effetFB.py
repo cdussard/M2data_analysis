@@ -17,14 +17,18 @@ nom_essai = "4"
 essaisFeedbackSeul = ["pas_enregistre","sujet jeté",
 "4","4","sujet jeté","4","4","4","4","MISSING","4","4",
 "4","4","4","4","4","4","4","4-b","4","4","4","4","4","4"]
-sujetsPb = [0,9]
-for sujetpb in sujetsPb:
-    allSujetsDispo.remove(sujetpb)
+
 # essaisFeedbackSeul = [nom_essai for i in range(25)]
 
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
-
+sujetsPb = [0,9]
+for sujetpb in sujetsPb:
+    allSujetsDispo.remove(sujetpb)
 liste_rawPathEffetFBseul = createListeCheminsSignaux(essaisFeedbackSeul,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+# plot les NFB a cote des rest
+liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
 #pour se placer dans les donnees lustre
 os.chdir("../../../../")
@@ -33,18 +37,18 @@ lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
 #ordre inverse au milieu de la manip pr eviter effets ordre)
-
 event_id_mainIllusion = {'Main illusion seule': 26}
 event_id_pendule={'Pendule seul':23}  
 event_id_main={'Main seule': 24}  
 
-nbSujets = 5
-SujetsDejaTraites = 16
+nbSujets = 2
+SujetsDejaTraites = 0
 rawPathEffetFBseul_sujets = liste_rawPathEffetFBseul[SujetsDejaTraites:SujetsDejaTraites+nbSujets]
 
 listeEpochs_main,listeICA,listeEpochs_pendule,listeEpochs_mainIllusion = all_conditions_analysis_FBseul(allSujetsDispo,rawPathEffetFBseul_sujets,
                             event_id_main,event_id_pendule,event_id_mainIllusion,
                             0.1,1,90,[50,100],'Fz')
+
 
 saveEpochsAfterICA_FBseul(listeEpochs_main,rawPathEffetFBseul_sujets,"main",True)
 saveEpochsAfterICA_FBseul(listeEpochs_pendule,rawPathEffetFBseul_sujets,"pendule",True)
@@ -52,13 +56,38 @@ saveEpochsAfterICA_FBseul(listeEpochs_mainIllusion,rawPathEffetFBseul_sujets,"ma
 save_ICA_files(listeICA,rawPathEffetFBseul_sujets,True)
 
 #=============== EPOCHS POWER ==========================
+#load saved Data
 EpochDataMain = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"main",True)
 
 EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"pendule",True)
 
 EpochDataMainIllusion = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"mainIllusion",True)
+#====================drop epochs with artefacts ======================
+#display epochs, chose which to drop
+initial_ref = 'Fz'
+liste_epochs_averageRef_main = []
+liste_epochs_averageRef_mainIllusion = []
+liste_epochs_averageRef_pendule = []
+channelsSansFz = ['Fp1', 'Fp2', 'F7', 'F3','F4', 'F8', 'FT9', 'FC5', 'FC1', 'FC2', 'FC6', 'FT10','T7', 'C3', 'Cz', 'C4', 'T8', 'TP9', 'CP5','CP1','CP2','CP6','TP10','P7', 'P3', 'Pz', 'P4', 'P8', 'O1', 'Oz', 'O2','HEOG','VEOG']
 
+epochs = EpochDataMain
+listeEpochs = liste_epochs_averageRef_main
+for num_sujet in range(len(epochs)):
+    #============== PLOT & DROP EPOCHS========================================
+    #epochs[num_sujet].reorder_channels(channelsSansFz) #nathalie : mieux de jeter epochs avant average ref (sinon ça va baver partout artefact)
+    #epochs[num_sujet].plot(n_channels=35,n_epochs=1) #select which epochs, which channels to drop
+    #====================MAIN===============================================================
+    epochs[num_sujet].info["bads"]=["FT9","FT10","TP9","TP10"]
+    signalInitialRef = mne.add_reference_channels(epochs[num_sujet],initial_ref)
+    averageRefSignal = signalInitialRef.set_eeg_reference('average')
+    listeEpochs.append(averageRefSignal)
+
+for epoch in EpochDataMain:
+    epoch.info["bads"]=["FT9","FT10","TP9","TP10"]
+    
+rawTest.plot(block=True)
 #===================set montage===IMPORTANT!!!!=======================
+
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
 for epochs in EpochDataMain:
     if epochs!=None:
@@ -78,230 +107,178 @@ liste_power_mainIllusion = plotSave_power_topo_cond(EpochDataMainIllusion,liste_
 
 
 #computing power and saving
-liste_power_sujets = []
-freqs = np.arange(3, 85, 1)
-n_cycles = freqs 
-i = 0
-EpochData = EpochDataPendule
+def computepower(EpochData):
+    liste_power_sujets = []
+    i = 0
+    freqs = np.arange(3, 85, 1)
+    n_cycles = freqs 
+    for epochs_sujet in EpochData:
+        print("========================\nsujet"+str(i))
+        epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
+        print("downsampling...")
+        power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False)
+        print("computing power...")
+        liste_power_sujets.append(power_sujet)
+        i += 1
+    return liste_power_sujets
 
-for epochs_sujet in EpochData:
-    print("========================\nsujet"+str(i))
-    epochData_sujet_down = epochs_sujet.resample(250., npad='auto') 
-    print("downsampling...")
-    power_sujet = mne.time_frequency.tfr_morlet(epochData_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False)
-    print("computing power...")
-    liste_power_sujets.append(power_sujet)
-    i += 1
+liste_power_sujets_p = computepower(EpochDataPendule)
+liste_power_sujets_m = computepower(EpochDataMain)
+liste_power_sujets_mi = computepower(EpochDataMainIllusion)
 
-save_tfr_data(liste_power_mainIllusion,liste_rawPathEffetFBseul,"mainIllusion")
+len(liste_power_sujets_p) == len(liste_rawPathEffetFBseul)
+save_tfr_data(liste_power_sujets_p,liste_rawPathEffetFBseul,"mainIllusion",True)
 
-save_tfr_data(liste_power_sujets,liste_rawPathEffetFBseul,"main")
+len(liste_power_sujets_m) == len(liste_rawPathEffetFBseul)
+save_tfr_data(liste_power_sujets_m,liste_rawPathEffetFBseul,"main",True)
+len(liste_power_sujets_mi) == len(liste_rawPathEffetFBseul)
+save_tfr_data(liste_power_sujets_mi,liste_rawPathEffetFBseul,"pendule",True)
 
-save_tfr_data(liste_power_sujets,liste_rawPathEffetFBseul,"pendule")
+def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap):
+    #liste_rawPathMain les mauvais sujets ont deja ete drops !
+    #============read the data==========================
+    liste_tfr_m = load_tfr_data_windows(liste_rawPathEffetFBseul[numSujet:numSujet+1],"main",True) 
+    liste_tfr_p = load_tfr_data_windows(liste_rawPathEffetFBseul[numSujet:numSujet+1],"pendule",True)
+    liste_tfr_mi = load_tfr_data_windows(liste_rawPathEffetFBseul[numSujet:numSujet+1],"mainIllusion",True)
+    
+    liste_tfr_m_nfb = load_tfr_data_windows(liste_rawPathMain[numSujet:numSujet+1],"",True)
+    liste_tfr_mi_nfb = load_tfr_data_windows(liste_rawPathMainIllusion[numSujet:numSujet+1],"",True)
+    liste_tfr_p_nfb = load_tfr_data_windows(liste_rawPathPendule[numSujet:numSujet+1],"",True)
+    
+    #============baseline==========================
+    dureePreBaseline = 3
+    dureePreBaseline = - dureePreBaseline
+    dureeBaseline = 2.0
+    valeurPostBaseline = dureePreBaseline + dureeBaseline
+    
+    baseline = (dureePreBaseline, valeurPostBaseline)
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p,liste_tfr_m,liste_tfr_mi):
+        tfr_p.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        tfr_m.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        tfr_mi.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p_nfb,liste_tfr_m_nfb,liste_tfr_mi_nfb):
+        tfr_p.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        tfr_m.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        tfr_mi.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+     #============plot topomap and TFR C3==========================
+     #create one image only
+    fig1, axs1 = plt.subplots(2,3)
+    fig2, axs2 = plt.subplots(2,3)
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p_nfb,liste_tfr_m_nfb,liste_tfr_mi_nfb):
+        tfr_p.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,0])
+        tfr_m.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,1])
+        tfr_mi.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,2])
+        #TFR C3
+        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,0])#,tmin=2,tmax=25)
+        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,1])
+        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,2])
+        
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p,liste_tfr_m,liste_tfr_mi):
+        tfr_p.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,0])
+        tfr_m.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,1])
+        tfr_mi.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,2])
+        #TFR C3
+        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,0])#,tmin=2,tmax=25)
+        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,1])
+        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,2])
+        
+    rawTest.plot(block=True)
+    return fig1,fig2
 
+ScalesSujetsGraphes_8a30Hz = [0.3,0.38,0.28,0.4,#S00-06
+                              0.28,0.28,0.4,0.34,#S07-11
+                              0.18,0.24,0.35,0.25,0.32,#S12-16
+                              0.22,0.4,0.24,0.16,0.3,0.4,0.26,0.4]#S17-21
+           
+
+def plotAllSujetsFB_NFB(sujetStart,sujetEnd): 
+    for i in range(sujetStart,sujetEnd):
+        listFiguresTopo = []
+        listFiguresTFR = []
+        numSujet = i
+        multiScaleTopo = 1.7
+        multiScaleTFR = 2.3
+        scaleTFR = ScalesSujetsGraphes_8a30Hz[numSujet]*multiScaleTFR
+        print(scaleTFR)
+        scaleTopo= ScalesSujetsGraphes_8a30Hz[numSujet]*multiScaleTopo
+        print(scaleTopo)
+        my_cmap = discrete_cmap(13, 'RdBu_r')
+        figTopo,figTFR = print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap)
+        listFiguresTFR.append(figTFR)
+        listFiguresTopo.append(figTopo)
+    return listFiguresTFR,listFiguresTopo
+
+listTFR,listTopo = plotAllSujetsFB_NFB(1,6)
+listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13)
+listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13)
+    
 #============= compute average power ==============
-dureePreBaseline = 4
+#check when we can do a baseline
+rawTest = mne.io.read_raw_brainvision(liste_rawPathEffetFBseul[8],preload=True,eog=('HEOG', 'VEOG'))#,misc=('EMG'))#AJOUT DU MISC EMG
+events = mne.events_from_annotations(rawTest)[0]
+rawTest.plot(block=True)
+
+#affichage condition repos de -4 a -1 
+dureePreBaseline = 3
 dureePreBaseline = - dureePreBaseline
-dureeBaseline = 3.0
+dureeBaseline = 2.0
 valeurPostBaseline = dureePreBaseline + dureeBaseline
 
 baseline = (dureePreBaseline, valeurPostBaseline)
-for tfr in liste_power_sujets:
-    tfr.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+for tfr_p,tfr_m,tfr_mi in zip(liste_power_sujets_p,liste_power_sujets_m,liste_power_sujetsmi):
+    tfr_p.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+    tfr_m.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+    tfr_mi.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+    
+    
+    
+nSujetsToPlot = 5
+sujetsAlreadyPlotted = 16
+subsetToPlot_p = liste_power_sujets_p[sujetsAlreadyPlotted:sujetsAlreadyPlotted+nSujetsToPlot]
+subsetToPlot_m = liste_power_sujets_m[sujetsAlreadyPlotted:sujetsAlreadyPlotted+nSujetsToPlot]
+subsetToPlot_mi = liste_power_sujets_mi[sujetsAlreadyPlotted:sujetsAlreadyPlotted+nSujetsToPlot]
+for tfr_p,tfr_m,tfr_mi in zip(subsetToPlot_p,subsetToPlot_m,subsetToPlot_mi):
+    tfr_p.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25)
+    tfr_m.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25)
+    tfr_mi.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25)
+rawTest.plot(block=True)
+scalesSujet =[0.35]
+
 
 #================compute grand average===============================================
 mode = 'logratio'
-av_power_mainIllusion = mne.grand_average(liste_power_mainIllusion,interpolate_bads=True)
+av_power_mainIllusion = mne.grand_average(liste_power_sujets_mi,interpolate_bads=False)
 save_topo_data(av_power_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"effet_mainIllusionSeule",False,1.0,24.0)#can be improved with boolean Params for alpha etcliste_tfr,interpolate_bads=True)
-
-av_power_main = mne.grand_average(liste_power_sujets,interpolate_bads=True)
+  
+av_power_main = mne.grand_average(liste_power_sujets_m,interpolate_bads=False)
 save_topo_data(av_power_main,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"effet_mainSeule",False,1.0,24.0)#can be improved with boolean Params for alpha etcliste_tfr,interpolate_bads=True)
 
-av_power_pendule = mne.grand_average(liste_power_sujets,interpolate_bads=True)
+av_power_pendule = mne.grand_average(liste_power_sujets_p,interpolate_bads=False)
 save_topo_data(av_power_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"effet_penduleSeul",False,1.0,24.0)#can be improved with boolean Params for alpha etcliste_tfr,interpolate_bads=True)
+
+v = 0.6
+av_power_pendule.plot(picks=["C3"],fmax=40,vmin=-v,vmax=v)
+av_power_main.plot(picks=["C3"],fmax=40,vmin=-v,vmax=v)
+av_power_mainIllusion.plot(picks=["C3"],fmax=40,vmin=-v,vmax=v)
+rawTest.plot(block=True)
+
+v = 0.38
+av_power_pendule.plot_topomap(fmin=8,fmax=30,tmin=2,tmax = 25,vmin=-v,vmax=v)
+av_power_main.plot_topomap(fmin=8,fmax=30,tmin=2,tmax = 25,vmin=-v,vmax=v)
+av_power_mainIllusion.plot_topomap(fmin=8,fmax=30,tmin=2,tmax = 25,vmin=-v,vmax=v)
+rawTest.plot(block=True)
+
 
 
 avpower_main_moins_mainIllusion = av_power_main - av_power_mainIllusion
 
 avpower_main_moins_pendule = av_power_main - av_power_pendule
 
+v= 0.6
+avpower_main_moins_pendule.plot(picks=["C3"],fmax=40,vmin=-v,vmax=v)
+avpower_main_moins_mainIllusion.plot(picks=["C3"],fmax=40,vmin=-v,vmax=v)
+rawTest.plot(block=True)
+
 save_topo_data(avpower_main_moins_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"effet_main-pendule",False,1.0,24.0)
 save_topo_data(avpower_main_moins_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"effet_main-mainIllusion",False,1.0,24.0)
-#============================================================================================================
-# SujetsPbNomFichiers = [0,1,2,3,4,5,6]#9 : manque recording (on a l'OV)
-# SujetsExclusAnalyse = [1,4]
-# #separer l'analyse en sujets ayant reussi et rate ?
-# #voir si ça se voyait a l'IM seule
-# SujetsAvecPb = np.unique(SujetsPbNomFichiers + SujetsExclusAnalyse)
-# allSujetsDispo = [i for i in range(nombreTotalSujets+1)]
-# for sujet_pbmatique in SujetsAvecPb:  
-#     allSujetsDispo.remove(sujet_pbmatique)
-# print(len(allSujetsDispo))
-
-# #on commence au 3 (reste pbs noms)
-# liste_rawPath = []
-# for num_sujet in allSujetsDispo:
-#     print("sujet n° "+str(num_sujet))
-#     nom_sujet = listeNumSujetsFinale[num_sujet]
-#     date_nom_fichier = dates[num_sujet][-4:]+"-"+dates[num_sujet][3:5]+"-"+dates[num_sujet][0:2]+"_"
-#     dateSession = listeDatesFinale[num_sujet]
-#     sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
-#     sample_data_dir = pathlib.Path(sample_data_loc)
-#     raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + nom_essai+".vhdr")
-#     liste_rawPath.append(raw_path_sample)
-
-# print(liste_rawPath)
-
-# listeAverageRef,listeRaw = pre_process_donnees(liste_rawPath,1,80,[50,100],31,'Fz',False,[])
-# listeICApreproc,listeICA = ICA_preproc(listeAverageRef,listeRaw,[],31,98,False)
-
-# events = mne.events_from_annotations(listeICApreproc[1])
-# #il faut retrouver les essais de chaque type
-# #23 24 25 26 #ordre inverse au milieu de la manip pr eviter effets ordre)
-# event_ids={'Pendule seul':23,
-#                   'Main seule': 24,
-#                   'Main tactile': 25,
-#                   'Main illusion': 26} 
-
-# liste_tous_epochs = []
-# for numSignal in range(1,len(listeICApreproc)):
-#     if numSignal ==9:
-#         pass
-#     else:
-#         print("\n numero "+str(numSignal))
-#         events = mne.events_from_annotations(listeICApreproc[numSignal])[0]#baseline=(-2, 0)
-#         signal = listeICApreproc[numSignal]
-#         epochsCibles = mne.Epochs(signal,events,event_ids,tmin=-5.0,tmax = 28.0,baseline=None,picks=["C3","Cz","C4"])
-#         liste_tous_epochs.append(epochsCibles)
-
-
-# tousEpochs.plot(block=True)#verif visuelle voire exclusion si besoin
-# tousEpochs = mne.epochs.concatenate_epochs(liste_tous_epochs)#15 * 2 epochs
-# tousEpochs.save("FB_seul_12suj_epo.fif") #loading point :)
-# tousEpochs = mne.read_epochs("FB_seul_12suj_epo.fif")
-# #sortir des cartes EEG topo
-
-
-# tousEpochs.plot_psd_topomap(bands = bands)#output etrange 3 elecs (normal : on a vire toutes les autres x)
-# tousEpochs.plot_psd(1,50,estimate="power",average=True)#output etrange
-
-
-# #pour debloquer les graphs
-# raw_signal.plot(block=True)
-
-# from mne.time_frequency import tfr_multitaper
-# from mne.viz.utils import center_cmap
-# import matplotlib.pyplot as plt
-# #1er graph
-# epochs = tousEpochs
-# # compute ERDS maps ###########################################################
-# freqs = np.arange(2, 36, 3)  # frequencies from 2-35Hz
-# n_cycles = freqs  # use constant t/f resolution
-# vmin, vmax = -1.5, 1.5  # set min and max ERDS values in plot
-# baseline = [-3.0, 0]  # baseline interval (in s) #muted par la baseline ds les epochs
-# #preferable d'avoir condition average baseline
-# cmap = center_cmap(plt.cm.RdBu, vmin, vmax)  # zero maps to white (https://matplotlib.org/2.0.2/examples/color/colormaps_reference.html)
-# kwargs = dict(n_permutations=100, step_down_p=0.05, seed=1,
-#               buffer_size=None, out_type='mask')  # for cluster test
-
-# tmin = -1
-# tmax = 30.0
-# # Run TF decomposition overall epochs
-# tfr = tfr_multitaper(epochs, freqs=freqs, n_cycles = n_cycles,
-#                      use_fft=True, return_itc=False, average=False,
-#                      decim=2,picks=['C3','Cz','C4'])#ajouter les neighboring electrodes du laplacien ?
-# tfr = tfr.crop(tmin, tmax)#est ce qu'il faudrait pas cropper apres ? essayer l'un puis l'autre et l'inverse
-# tfr = tfr.apply_baseline(baseline, mode="percent")#baseline mean &log ratio resultats bizarres
-
-# #df = tfr.to_data_frame(time_format=None, long_format=True)
-# #df.to_csv("data15Sujets_IMseule_long.csv")
-
-# event_ids={'Pendule seul':23,
-#                   'Main seule': 24,
-#                   'Main tactile': 25,
-#                   'Main illusion': 26} 
-# #carte temps frequence
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import pandas as pd
-# import seaborn as sns
-# import mne
-# from mne.io import concatenate_raws, read_raw_edf
-# from mne.time_frequency import tfr_multitaper
-# from mne.stats import permutation_cluster_1samp_test as pcluster_test
-# from mne.viz.utils import center_cmap
-# vmin, vmax = -1.5, 1.5 
-# epochs = tousEpochs
-# for event in event_ids:
-#     # select desired epochs for visualization
-#     tfr_ev = tfr[event]
-#     fig, axes = plt.subplots(1, 4, figsize=(12, 4),
-#                              gridspec_kw={"width_ratios": [10, 10, 10, 1]})
-#     for ch, ax in enumerate(axes[:-1]):  # for each channel
-#         print("channel"+str(tfr.ch_names[ch]))
-#         # positive clusters
-#         _, c1, p1, _ = pcluster_test(tfr_ev.data[:, ch, ...], tail=1, **kwargs)
-#         # negative clusters
-#         _, c2, p2, _ = pcluster_test(tfr_ev.data[:, ch, ...], tail=-1,
-#                                      **kwargs)
-
-#         # note that we keep clusters with p <= 0.05 from the combined clusters
-#         # of two independent tests; in this example, we do not correct for
-#         # these two comparisons
-#         c = np.stack(c1 + c2, axis=2)  # combined clusters
-#         p = np.concatenate((p1, p2))  # combined p-values
-#         mask = c[..., p <= 0.05].any(axis=-1)
-
-#         # plot TFR (ERDS map with masking)
-#         tfr_ev.average().plot([ch], vmin=vmin, vmax=vmax, cmap=(cmap, False),
-#                               axes=ax, colorbar=False, show=False, mask=mask,
-#                               mask_style="mask")
-
-#         ax.set_title(tfr.ch_names[ch], fontsize=10)#change epoch pr tfr pck picks effectue au tfr, pas au niveau epoch
-#         ax.axvline(0, linewidth=1, color="black", linestyle=":")  # event
-#         if ch != 0:
-#             ax.set_ylabel("")
-#             ax.set_yticklabels("")
-#     fig.colorbar(axes[0].images[-1], cax=axes[-1])
-#     fig.suptitle("ERDS ({})".format(event))
-#     fig.show()
-    
-# #evolution au cours du temps
-# df = tfr.to_data_frame(time_format=None, long_format=True)
-
-# # Map to frequency bands:
-# freq_bounds = {'_': 0,
-#                'below': 8,
-#                '8-30Hz': 30,
-#                'above': 140
-#                }
-# df['band'] = pd.cut(df['freq'], list(freq_bounds.values()),
-#                     labels=list(freq_bounds)[1:])
-
-# # Filter to retain only relevant frequency bands:
-# freq_bands_of_interest = ['8-30Hz', 'above', 'below']
-# df = df[df.band.isin(freq_bands_of_interest)]
-# df['band'] = df['band'].cat.remove_unused_categories()
-# want_chs = ['C3', 'Cz', 'C4']
-# # Order channels for plotting:
-# df['channel'] = df['channel'].cat.reorder_categories(want_chs, ordered=True)
-
-# g = sns.FacetGrid(df, row='band', col='channel', margin_titles=True)
-# g.map(sns.lineplot, 'time', 'value', 'condition', n_boot=10)
-# axline_kw = dict(color='black', linestyle='dashed', linewidth=0.5, alpha=0.5)
-# g.map(plt.axhline, y=0, **axline_kw)
-# g.map(plt.axvline, x=0, **axline_kw)
-# g.set(ylim=(None, 1.5))
-# g.set_axis_labels("Time (s)", "ERDS (%)")
-# g.set_titles(col_template="{col_name}", row_template="{row_name}")
-# g.add_legend(ncol=2, loc='lower center')
-# g.fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.08)
-    
-#  #reconstruire l'electrode C3 laplacien ?
-#  # Create a bipolar EOG channel.
-# # The resulting signal should be EOG 061 - EOG 062, so all zeros, because in
-# # this example we just copied the channel.
-# #C3reconstructed = mne.set_bipolar_reference(raw, 'EOG 061', 'EOG 062', ch_name='HEOG') #pas bon, on a besoin de multiplier, ici c'est un - autre
-# #plutot utiliser raw.get_data et travailler sur les tableaux surement
-# #sortir les donnees au cours du temps avec openvibe ? (ici ça desynchronise mais est ce qu'avec le data processing openvibe les sujets etaient
-# #vrmt avantages ?)

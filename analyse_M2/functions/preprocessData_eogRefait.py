@@ -134,8 +134,8 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
     listeFilteredSignal = filter_data(listeRaw,lowFreqSignal,high_freq,notch_freqs)
     listeFilteredICA = filter_data(listeRaw,low_freqICA,high_freq,notch_freqs)
     #mark bad
-    listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,['TP9','TP10'])#,'FT9','FT10'])
-    listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,['TP9','TP10'])#,'FT9','FT10'])
+    listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,['TP9','TP10','FT9','FT10'])
+    listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,['TP9','TP10','FT9','FT10'])
     #epoching
     dureeEpoch = 31#29.3#entre 28.6 et 31.1 24s en vrai
     dureePreEpoch = 5.0
@@ -210,34 +210,34 @@ def treat_indiv_data(epochsSujet,epochsPreICASujet,initial_ref):
         ica = None
     return averageRefSignal,ica
 
-def indiv_analysis(listeRawPath,lowFreqSignal,low_freqICA,high_freq,notch_freqs,event_id,initial_ref):
-    montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
-    listeRaw = read_raw_data(listeRawPath)
-    #filtre a 1Hz le signal pour ICA mais a 0.1 Hz le signal a analyser
-    listeFilteredSignal = filter_data(listeRaw,lowFreqSignal,high_freq,notch_freqs)
-    listeFilteredICA = filter_data(listeRaw,low_freqICA,high_freq,notch_freqs)
-    #mark bad
-    listeBad = ["TP9","TP10","Fp1","Fp2"]#,"FT9","FT10"]#ft9 OrawPath_FBseulBLIGE pour sujets 10 a 15
-    listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,listeBad)#,'FT9','FT10'])
-    listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,listeBad)#,'FT9','FT10'])
-    dureeEpoch = 31#29.3#entre 28.6 et 31.1 24s en vrai
-    dureePreEpoch = 5.0
-    reject = dict(
-        eeg=50e-5 # unit: V (EEG channels) & 100 on drop rien, a 10 on drop tout ?
-        )
+# def indiv_analysis(listeRawPath,lowFreqSignal,low_freqICA,high_freq,notch_freqs,event_id,initial_ref):
+#     montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
+#     listeRaw = read_raw_data(listeRawPath)
+#     #filtre a 1Hz le signal pour ICA mais a 0.1 Hz le signal a analyser
+#     listeFilteredSignal = filter_data(listeRaw,lowFreqSignal,high_freq,notch_freqs)
+#     listeFilteredICA = filter_data(listeRaw,low_freqICA,high_freq,notch_freqs)
+#     #mark bad
+#     listeBad = ["TP9","TP10","Fp1","Fp2"]#,"FT9","FT10"]#ft9 OrawPath_FBseulBLIGE pour sujets 10 a 15
+#     listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,listeBad)#,'FT9','FT10'])
+#     listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,listeBad)#,'FT9','FT10'])
+#     dureeEpoch = 31#29.3#entre 28.6 et 31.1 24s en vrai
+#     dureePreEpoch = 5.0
+#     reject = dict(
+#         eeg=50e-5 # unit: V (EEG channels) & 100 on drop rien, a 10 on drop tout ?
+#         )
 
-    liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch,reject)
-    i = 0
-    liste_ICA = []
-    liste_epochs_Sujets = []
-    for i in range(len(liste_epochsSignal)):#parcourir les sujets
-        averageRefSignal,ICA = treat_indiv_data(liste_epochsSignal[i],liste_epochsPreICA[i],initial_ref) 
-        #setMOntage
-        if averageRefSignal is not None:
-            averageRefSignal.set_montage(montageEasyCap) 
-        liste_epochs_Sujets.append(averageRefSignal)
-        liste_ICA.append(ICA)
-    return liste_ICA,liste_epochs_Sujets
+#     liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch,reject)
+#     i = 0
+#     liste_ICA = []
+#     liste_epochs_Sujets = []
+#     for i in range(len(liste_epochsSignal)):#parcourir les sujets
+#         averageRefSignal,ICA = treat_indiv_data(liste_epochsSignal[i],liste_epochsPreICA[i],initial_ref) 
+#         #setMOntage
+#         if averageRefSignal is not None:
+#             averageRefSignal.set_montage(montageEasyCap) 
+#         liste_epochs_Sujets.append(averageRefSignal)
+#         liste_ICA.append(ICA)
+#     return liste_ICA,liste_epochs_Sujets
 
 def all_conditions_analysis(allSujetsDispo,rawPath_main,rawPath_pendule,rawPath_mainIllusion,
                             event_id_main,event_id_pendule,event_id_mainIllusion,
