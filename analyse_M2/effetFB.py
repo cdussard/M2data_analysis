@@ -134,7 +134,7 @@ save_tfr_data(liste_power_sujets_m,liste_rawPathEffetFBseul,"main",True)
 len(liste_power_sujets_mi) == len(liste_rawPathEffetFBseul)
 save_tfr_data(liste_power_sujets_mi,liste_rawPathEffetFBseul,"pendule",True)
 
-def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap):
+def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,mergeFigures):
     #liste_rawPathMain les mauvais sujets ont deja ete drops !
     #============read the data==========================
     liste_tfr_m = load_tfr_data_windows(liste_rawPathEffetFBseul[numSujet:numSujet+1],"main",True) 
@@ -163,28 +163,47 @@ def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap):
         tfr_mi.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
      #============plot topomap and TFR C3==========================
      #create one image only
-    fig1, axs1 = plt.subplots(2,3)
-    fig2, axs2 = plt.subplots(2,3)
-    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p_nfb,liste_tfr_m_nfb,liste_tfr_mi_nfb):
-        tfr_p.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,0])
-        tfr_m.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,1])
-        tfr_mi.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,2])
-        #TFR C3
-        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,0])#,tmin=2,tmax=25)
-        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,1])
-        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,2])
+    if mergeFigures :
+        fig3, axs3 = plt.subplots(2,7,figsize=(10,7), gridspec_kw={'width_ratios': [1,1,1,0.3,1.3,1.3,1.3],
+                                                    'height_ratios': [1,1]},constrained_layout=True)#on rajoute un trou au milieu pour place
+        #pour colorbar qui n'est pas incluse dans le subplot et ne peut donc pas etre scaled et a tendance a overlap l'autre plot
+        axs1 = axs3
+        axs2 = axs3
+        indexsColonneFigure = [0,1,2,4,5,6]
+        fig3.set_size_inches(70, 12)
+    else:
+        fig1, axs1 = plt.subplots(2,3)
+        fig2, axs2 = plt.subplots(2,3)
+        indexsColonneFigure = [0,1,2,0,1,2]
         
-    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p,liste_tfr_m,liste_tfr_mi):
-        tfr_p.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,0])
-        tfr_m.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,1])
-        tfr_mi.plot_topomap(fmin=8,fmax=30,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,2])
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p_nfb,liste_tfr_m_nfb,liste_tfr_mi_nfb):
+        tfr_p.plot_topomap(fmin=fmin,fmax=fmax,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,indexsColonneFigure[0]],colorbar=False)
+        tfr_m.plot_topomap(fmin=fmin,fmax=fmax,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,indexsColonneFigure[1]],colorbar=False)
+        tfr_mi.plot_topomap(fmin=fmin,fmax=fmax,tmin=2.5,tmax=26.5,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[0,indexsColonneFigure[2]])
         #TFR C3
-        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,0])#,tmin=2,tmax=25)
-        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,1])
-        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,2])
+        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,indexsColonneFigure[3]],colorbar=False)#,tmin=2,tmax=25)
+        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,indexsColonneFigure[4]],colorbar=False)
+        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[0,indexsColonneFigure[5]])    
+    for tfr_p,tfr_m,tfr_mi in zip(liste_tfr_p,liste_tfr_m,liste_tfr_mi):
+        tfr_p.plot_topomap(fmin=fmin,fmax=fmax,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,indexsColonneFigure[0]],colorbar=False)
+        tfr_m.plot_topomap(fmin=fmin,fmax=fmax,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,indexsColonneFigure[1]],colorbar=False)
+        tfr_mi.plot_topomap(fmin=fmin,fmax=fmax,tmin=0,tmax=25,vmin=-scaleTopo,vmax=scaleTopo,cmap=my_cmap,axes=axs1[1,indexsColonneFigure[2]])
+        #TFR C3
+        tfr_p.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,indexsColonneFigure[3]],colorbar=False)#,tmin=2,tmax=25)
+        tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,indexsColonneFigure[4]],colorbar=False)
+        tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,indexsColonneFigure[5]])
         
     rawTest.plot(block=True)
-    return fig1,fig2
+    if mergeFigures:
+        #fig3.tight_layout(pad=3.0,w_pad=2)
+        plt.subplots_adjust(top=0.973,bottom=0.043,left=0.016,right=0.96,hspace=0.098,wspace=0.1)
+        for x in axs1.ravel():
+            x.axis("off")
+        for x in axs2.ravel():
+            x.axis("off")
+        return fig3
+    else:
+        return fig1,fig2
 
 ScalesSujetsGraphes_8a30Hz = [0.3,0.38,0.28,0.4,#S00-06
                               0.28,0.28,0.4,0.34,#S07-11
@@ -192,10 +211,11 @@ ScalesSujetsGraphes_8a30Hz = [0.3,0.38,0.28,0.4,#S00-06
                               0.22,0.4,0.24,0.16,0.3,0.4,0.26,0.4]#S17-21
            
 
-def plotAllSujetsFB_NFB(sujetStart,sujetEnd): 
+def plotAllSujetsFB_NFB(sujetStart,sujetEnd,fmin,fmax,mergeTopoTFR): 
     for i in range(sujetStart,sujetEnd):
         listFiguresTopo = []
         listFiguresTFR = []
+        listFigures = []
         numSujet = i
         multiScaleTopo = 1.7
         multiScaleTFR = 2.3
@@ -204,14 +224,29 @@ def plotAllSujetsFB_NFB(sujetStart,sujetEnd):
         scaleTopo= ScalesSujetsGraphes_8a30Hz[numSujet]*multiScaleTopo
         print(scaleTopo)
         my_cmap = discrete_cmap(13, 'RdBu_r')
-        figTopo,figTFR = print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap)
-        listFiguresTFR.append(figTFR)
-        listFiguresTopo.append(figTopo)
-    return listFiguresTFR,listFiguresTopo
+        if mergeTopoTFR:
+            figTopoTFR = print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,mergeTopoTFR)
+            listFigures.append(figTopoTFR)
+            
+        else:
+            figTopo,figTFR = print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,mergeTopoTFR)
+            listFiguresTFR.append(figTFR)
+            listFiguresTopo.append(figTopo)
+        if mergeTopoTFR:
+            return listFigures
+        else:
+            return listFiguresTFR,listFiguresTopo
 
-listTFR,listTopo = plotAllSujetsFB_NFB(1,6)
-listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13)
-listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13)
+listTFR,listTopo = plotAllSujetsFB_NFB(1,6,8,30)
+listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13,8,30)
+listTFR3,listTopo3 = plotAllSujetsFB_NFB(14,20,8,30)
+listTFR4,listTopo4 = plotAllSujetsFB_NFB(20,21,8,30)
+listTFR4,listTopo4 = plotAllSujetsFB_NFB(6,7,8,30)
+listTFR4,listTopo4 = plotAllSujetsFB_NFB(13,14,8,30,True)
+
+#TEST ONE FIGURE OR PLOT THEM ALL
+listFig = plotAllSujetsFB_NFB(0,1,12,15,True) 
+
     
 #============= compute average power ==============
 #check when we can do a baseline
