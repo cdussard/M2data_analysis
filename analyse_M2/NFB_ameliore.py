@@ -350,6 +350,7 @@ figPendule = plot_C3_power(av_power_pendule,True,False,3,40,vmin,vmax)
 figMain = plot_C3_power(av_power_main,True,False,3,40,vmin,vmax)
 figMainIllusion = plot_C3_power(av_power_mainIllusion,True,True,3,40,vmin,vmax)
 
+
 raw_signal.plot(block=True)
     
 
@@ -363,6 +364,12 @@ av_power.plot_topo(fmax=35)#cliquer sur C3,Cz,C4 et sauver graphes
 
 raw_signal.plot(block=True)#debloquer graphes
 # #=====================Compute difference between conditions======================================
+tmin = 2.5
+tmax = 26.8
+av_power_pendule.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
+av_power_main.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
+av_power_mainIllusion.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
+raw_signal.plot(block=True)
 
 avpower_main_moins_pendule = av_power_main - av_power_pendule
 
@@ -370,6 +377,13 @@ avpower_main_moins_mainIllusion = av_power_main - av_power_mainIllusion
 
 avpower_main_moins_pendule.plot(picks="C3")
 avpower_main_moins_mainIllusion.plot(picks="C3")
+
+my_cmap = discrete_cmap(13, 'RdBu_r')
+avpower_main_moins_pendule.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
+avpower_main_moins_mainIllusion.plot_topomap(fmin=8,fmax=30,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
+raw_signal.plot(block=True)
+avpower_main_moins_pendule.plot_topomap(fmin=12,fmax=15,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
+avpower_main_moins_mainIllusion.plot_topomap(fmin=12,fmax=15,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
 raw_signal.plot(block=True)
 
 save_topo_data(avpower_main_moins_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main-pendule",False,1.5,25.5,24)
