@@ -103,20 +103,35 @@ def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainI
    
 liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
 tableau_mainPendule,tableau_mainMainIllusion = data_freq_tTest_perm("C3",8,30,2.5,26.8,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
-#t test avec permutation
+listeSuj = [0,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+for sujet in range(23):
+    print("sujet n°"+str(listeSuj[sujet]))
+    mean_12_15 = np.mean(tableau_mainPendule[sujet][4:8])#12-15Hz
+    if mean_12_15<0:
+        print("NEG")
+    else:
+        print("POS")
+    print(mean_12_15)
 
-res = mne.stats.permutation_t_test(tableau_mainPendule,1000000)
+#t test avec permutation
+res = mne.stats.permutation_t_test(tableau_mainPendule,100000)
 
 res[0]
 pval = res[1]
 res[2]
 
+i = 8
 for p in pval:
-    print(p)
+    print("freq"+str(i)+"Hz : "+str(p))
+    i += 1
     
-res2 = mne.stats.permutation_t_test(tableau_mainMainIllusion,1000000)
+res2 = mne.stats.permutation_t_test(tableau_mainMainIllusion,100000)
 pval2 = res2[1]
 i = 8
 for p in pval2:
     print("freq"+str(i)+"Hz : "+str(p))
     i += 1
+    
+    
+#avec clustering
+res_c = mne.stats.permutation_cluster_test(tableau_mainPendule)
