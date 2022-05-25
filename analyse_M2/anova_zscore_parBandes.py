@@ -40,7 +40,8 @@ def copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
         liste_tfr_mainIllusion.append(tfr_mi.copy())
     return liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion
 
-   
+
+
 
 def anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,mode_baseline,fmin,fmax,tmin,tmax,elec):
     baseline = (-3,-1)
@@ -148,6 +149,36 @@ for band in bandsToTest:
 liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
 moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"C3")
 anovaMediane_c3_12_15hz,anovaMean_c3_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz,False,"")
+
+#1 ANOVA POUR 4 BANDES
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_8_12hz,med_bandElec_c3_8_12hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",8,12,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_13_20hz,med_bandElec_c3_13_20hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",13,20,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_15_20hz,med_bandElec_c3_15_20hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",15,20,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_20_30hz,med_bandElec_c3_20_30hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",20,30,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_8_13hz,med_bandElec_c3_8_13hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",8,13,2.5,26.8,"C3")
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_15_30hz,med_bandElec_c3_15_30hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",15,30,2.5,26.8,"C3")
+
+
+
+listeRes = [med_bandElec_c3_8_12hz,med_bandElec_c3_12_15hz,med_bandElec_c3_13_20hz,med_bandElec_c3_15_20hz,med_bandElec_c3_20_30hz]
+listeString = ["8_12Hz","12_15Hz","13_20Hz","15_20Hz","20_30Hz"]
+for res,txt in zip(listeRes,listeString):
+    df_long = pd.DataFrame(res)
+    df_long.to_csv("../csv_files/ANOVA_bandes/ANOVA_"+txt+"_C3_long.csv")
+
+df_long = pd.DataFrame(med_bandElec_c3_8_13hz)
+df_long.to_csv("../csv_files/ANOVA_bandes/ANOVA_8_13Hz_C3_long.csv")
+
+df_long = pd.DataFrame(med_bandElec_c3_15_30hz)
+df_long.to_csv("../csv_files/ANOVA_bandes/ANOVA_15_30Hz_C3_long.csv")
 
 import ptitprince
 #raincloud plot
