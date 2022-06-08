@@ -169,7 +169,7 @@ def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,m
         #pour colorbar qui n'est pas incluse dans le subplot et ne peut donc pas etre scaled et a tendance a overlap l'autre plot
         axs1 = axs3
         axs2 = axs3
-        indexsColonneFigure = [0,1,2,4,5,6]
+        indexsColonneFigure = [0,1,2,4,5,6,7]
         fig3.set_size_inches(70, 12)
     else:
         fig1, axs1 = plt.subplots(2,3)
@@ -193,14 +193,17 @@ def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,m
         tfr_m.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,indexsColonneFigure[4]],colorbar=False)
         tfr_mi.plot(picks="C3",fmax=40,vmin=-scaleTFR,vmax=scaleTFR,axes=axs2[1,indexsColonneFigure[5]])
         
-    rawTest.plot(block=True)
+    
     if mergeFigures:
         #fig3.tight_layout(pad=3.0,w_pad=2)
-        plt.subplots_adjust(top=0.973,bottom=0.043,left=0.016,right=0.96,hspace=0.098,wspace=0.1)
-        for x in axs1.ravel():
-            x.axis("off")
-        for x in axs2.ravel():
-            x.axis("off")
+        plt.subplots_adjust(top=0.973,bottom=0.043,left=0.016,right=0.96,hspace=0.098,
+wspace=0.1)
+        axs1[0,3].axis("off")
+        axs1[1,3].axis("off")#attention le resultat ne se voit pas forcement tout de suite mais le resultat est bien stocké
+        axs2[0,3].axis("off")    # dans l'image finale qui est appended   
+        axs2[1,3].axis("off")
+         #plt.close()
+        rawTest.plot(block=True)
         return fig3
     else:
         return fig1,fig2
@@ -209,19 +212,25 @@ ScalesSujetsGraphes_8a30Hz = [0.3,0.38,0.28,0.4,#S00-06
                               0.28,0.28,0.4,0.34,#S07-11
                               0.18,0.24,0.35,0.25,0.32,#S12-16
                               0.22,0.4,0.24,0.16,0.3,0.4,0.26,0.4]#S17-21
+
+ScalesSujetsGraphes_Alpha = [0.32,0.38,0.25,0.34,#S00-06
+                             0.26,0.32,0.4,0.34,#S07-11
+                             0.18,0.3,0.35,0.26,0.38,#S12-16
+                             0.24,0.28,0.3,0.28,0.4,#S17-21
+                             0.4,0.4,0.35]
            
 
-def plotAllSujetsFB_NFB(sujetStart,sujetEnd,fmin,fmax,mergeTopoTFR): 
+def plotAllSujetsFB_NFB(sujetStart,sujetEnd,fmin,fmax,mergeTopoTFR,scalesList): 
+    listFiguresTopo = []
+    listFiguresTFR = []
+    listFigures = []
     for i in range(sujetStart,sujetEnd):
-        listFiguresTopo = []
-        listFiguresTFR = []
-        listFigures = []
         numSujet = i
         multiScaleTopo = 1.7
         multiScaleTFR = 2.3
-        scaleTFR = ScalesSujetsGraphes_8a30Hz[numSujet]*multiScaleTFR
+        scaleTFR = scalesList[numSujet]*multiScaleTFR
         print(scaleTFR)
-        scaleTopo= ScalesSujetsGraphes_8a30Hz[numSujet]*multiScaleTopo
+        scaleTopo= scalesList[numSujet]*multiScaleTopo
         print(scaleTopo)
         my_cmap = discrete_cmap(13, 'RdBu_r')
         if mergeTopoTFR:
@@ -232,22 +241,39 @@ def plotAllSujetsFB_NFB(sujetStart,sujetEnd,fmin,fmax,mergeTopoTFR):
             figTopo,figTFR = print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,mergeTopoTFR)
             listFiguresTFR.append(figTFR)
             listFiguresTopo.append(figTopo)
-        if mergeTopoTFR:
-            return listFigures
-        else:
-            return listFiguresTFR,listFiguresTopo
+        i += 1
+    if mergeTopoTFR:
+        return listFigures
+    else:
+        return listFiguresTFR,listFiguresTopo
 
-listTFR,listTopo = plotAllSujetsFB_NFB(1,6,8,30)
+listTFR,listTopo = plotAllSujetsFB_NFB(1,6,8,30,ScalesSujetsGraphes_8a30Hz)
 listTFR2,listTopo2 = plotAllSujetsFB_NFB(7,13,8,30)
 listTFR3,listTopo3 = plotAllSujetsFB_NFB(14,20,8,30)
 listTFR4,listTopo4 = plotAllSujetsFB_NFB(20,21,8,30)
 listTFR4,listTopo4 = plotAllSujetsFB_NFB(6,7,8,30)
-listTFR4,listTopo4 = plotAllSujetsFB_NFB(13,14,8,30,True)
+listTFR4,listTopo4 = plotAllSujetsFB_NFB(13,14,8,30,True,ScalesSujetsGraphes_8a30Hz)
 
 #TEST ONE FIGURE OR PLOT THEM ALL
-listFig = plotAllSujetsFB_NFB(0,1,12,15,True) 
-
+listFig = plotAllSujetsFB_NFB(0,2,12,15,True,ScalesSujetsGraphes_Alpha) 
+listFig[0]
+for fig in listFig:
+    fig.show()
+    plt.colorbar()
     
+    # Get the current axis 
+    ax = plt.gca()        
+    
+    # Get the images on an axis
+    im = ax.images        
+    
+    # Assume colorbar was plotted last one plotted last
+    cb = im[-1].colorbar   
+    
+    # Do any actions on the colorbar object (e.g. remove it)
+    cb.remove()
+    fig.show()
+rawTest.plot(block=True)
 #============= compute average power ==============
 #check when we can do a baseline
 rawTest = mne.io.read_raw_brainvision(liste_rawPathEffetFBseul[8],preload=True,eog=('HEOG', 'VEOG'))#,misc=('EMG'))#AJOUT DU MISC EMG

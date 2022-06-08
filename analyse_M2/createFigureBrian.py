@@ -72,7 +72,7 @@ data_8_30 = np.mean(data_copy.data,axis=1)
 
 epo = EvokedArray(data_8_30, data.info)
 
-times = np.arange(10.5,18.5,0.7)
+times = np.arange(6,24,1)
 fig,anim = epo.animate_topomap(
     times=times, ch_type='eeg', frame_rate=3, time_unit='s', blit=False,show=False)
 raw_signal.plot(block=True)
@@ -110,3 +110,27 @@ anim.save('animation_mainVibrations.gif', writer='imagemagick', fps=3)#s011 main
 
 anim = animate_topo(av_power_main,False,6,24,1)
 anim.save('animation_main.gif', writer='imagemagick', fps=3)#s011 main
+
+#find correct band 
+list_data = [av_power_main,av_power_mainIllusion,av_power_pendule]
+ 
+fullAverage = mne.grand_average(list_data)
+
+fullAverage.plot(picks="C3",fmax=40)
+raw_signal.plot(block=True)
+
+v = 0.25
+av_power_pendule.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
+av_power_main.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
+av_power_mainIllusion.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
+raw_signal.plot(block=True)
+
+anim = animate_topo(av_power_pendule,False,0,24,1)
+anim.save('../images/animation_pendule_full.gif', writer='imagemagick', fps=3)#s011 main
+
+anim = animate_topo(av_power_mainIllusion,False,0,24,1)
+anim.save('../images/animation_mainVibrations_full.gif', writer='imagemagick', fps=3)#s011 main
+
+anim = animate_topo(av_power_main,False,0,24,1)
+anim.save('../images/animation_main_full.gif', writer='imagemagick', fps=3)#s011 main
+
