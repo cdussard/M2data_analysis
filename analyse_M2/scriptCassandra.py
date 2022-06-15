@@ -51,4 +51,26 @@ for i in range(8):
     raw_signal.plot(block=True)
 
 
+#======== moyenner les donnees par sujet ================
+#test pour sujet 00 
+tfrPendule_s0 = liste_tfrPendule[0]
+tfrMain_s0  = liste_tfrMain[0]
+tfrMainIllusion_s0  = liste_tfrMainIllusion[0] 
 
+tfrPendule_s0.apply_baseline(baseline = (-3,-1),mode="logratio")
+tfrMain_s0.apply_baseline(baseline = (-3,-1),mode="logratio")
+tfrMainIllusion_s0.apply_baseline(baseline = (-3,-1),mode="logratio")
+
+tfrPendule_s0.plot(picks="C3")
+tfrMain_s0.plot(picks="C3")
+tfrMainIllusion_s0.plot(picks="C3")
+
+moy_s00 = (tfrPendule_s0 + tfrMain_s0 + tfrMainIllusion_s0)/3
+
+moy_s00 = (tfrPendule_s0 + tfrMain_s0 + tfrMainIllusion_s0)/3
+
+moy_s00.plot(picks="C3")
+raw_signal.plot(block=True)
+
+#pour moyenner temps et frequences (dim = 1 et 2)
+moy_FreqTpsEcrase = np.mean(moy_s00.data,axis=(1,2))

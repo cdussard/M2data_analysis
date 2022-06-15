@@ -221,12 +221,16 @@ def load_ICA_files(liste_rawPath):
     return liste_ICA
 
 #save epochs after ICA
-def saveEpochsAfterICA_apresdropBad(listeEpochs,liste_rawPath):    #Save files epochs_ICaises
+def saveEpochsAfterICA_apresdropBad_windows(listeEpochs,liste_rawPath,windows):    #Save files epochs_ICaises
     i=0
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     for signal in listeEpochs:
         path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -235,12 +239,16 @@ def saveEpochsAfterICA_apresdropBad(listeEpochs,liste_rawPath):    #Save files e
     print("done saving")
     return True
 
-def saveEpochsAfterICA_avantdropBad(listeEpochs,liste_rawPath):    #Save files epochs_ICaises
+def saveEpochsAfterICA_avantdropBad_windows(listeEpochs,liste_rawPath,windows):    #Save files epochs_ICaises
     i=0
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     for signal in listeEpochs:
         path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../EPOCH_ICA_avant_dropBad_avant_averageRef/" + path_raccourci_split[0] + "/"
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -294,6 +302,7 @@ def save_tfr_data(listeAverageTFR,listerawPath,suffixe,windows):
     return True
 
 import scipy
+from scipy import io
 def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline):
     if suffixe != "":
         suffixe = "-" + suffixe
@@ -308,11 +317,35 @@ def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baselin
             os.makedirs(directory)
         if doBaseline:
             averageTFR.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
-        scipy.io.savemat(directory+ path_raccourci_split[0] + suffixe+".mat", {'data': averageTFR.data })
+        io.savemat(directory+ path_raccourci_split[0] + suffixe+".mat", {'data': averageTFR.data })
         i += 1
     print("done saving")
     return True
 
+def save_elec_fr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    if suffixe != "":
+        suffixe = "-" + suffixe
+    i = 0
+    for averageTFR in listeAverageTFR:
+        print("saving subj"+str(i))
+        path_sujet = listerawPath[i]#attention ne marche que si on a les epochs dans l'ordre
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../MATLAB_DATA/" + path_raccourci_split[0] + "/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        if doBaseline:
+            averageTFR.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        #mean over time 
+        averageTFR_withoutTime = np.mean(averageTFR.data,axis=2)
+        scipy.io.savemat(directory+ path_raccourci_split[0] + suffixe+"timePooled"+".mat", {'data': averageTFR_withoutTime.data })
+        i += 1
+    print("done saving")
+    return True
 
         
 def load_tfr_data_windows(liste_rawPath,suffixe,windows):
@@ -449,7 +482,11 @@ def load_data_postICA_preDropbad(liste_rawPath,suffixe):
         i += 1
     return liste_signaux_loades
 
-def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows):
+def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows,avantDropBad):
+    if avantDropBad:
+        dossier = "EPOCH_ICA_avant_dropBad_avant_averageRef/"
+    else:
+        dossier = "EPOCH_ICA_APRES_REF/"
     if windows:
         charac_split = "\\"
     else:
@@ -463,7 +500,7 @@ def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows):
         path_sujet = liste_rawPath[i]
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
         path_raccourci_split = path_raccourci.split(charac_split)
-        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
+        directory = "../"+dossier + path_raccourci_split[0] + "/"
         print(directory)
         if os.path.exists(directory):
             try:

@@ -29,7 +29,7 @@ raw_signal.plot(block=True)
 
 
 #3 conds plot
-def plot_elec_cond(av_power,elec_name,cond,elec_position,freqs,fig,ax):
+def plot_elec_cond(av_power,elec_name,cond,elec_position,freqs,fig,ax,scaleMin,scaleMax):
     data = av_power.data
     data_meanTps = np.mean(data,axis=2)
     data_elec = data_meanTps[elec_position][:]
@@ -38,12 +38,14 @@ def plot_elec_cond(av_power,elec_name,cond,elec_position,freqs,fig,ax):
     plt.legend(loc="upper left")
     ax.axvline(x=8,color="black",linestyle="--")
     ax.axvline(x=30,color="black",linestyle="--")
+    plt.ylim([scaleMin, scaleMax])
+    plt.xlim([2, 55])
 
 def plot_3conds(elec_name,elec_pos,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax):
     fig, ax = plt.subplots()
-    plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax)
-    plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax)
-    plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax)
+    plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
+    plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
+    plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
     plt.ylim([scaleMin, scaleMax])
     plt.xlim([2, 55])
     
@@ -72,7 +74,7 @@ raw_signal.plot(block=True)
 def plot_allElec(av_power,condition,elec_names,elec_poses,scaleMin,scaleMax,freqs):
     fig, ax = plt.subplots()
     for elec,pos in zip(elec_names,elec_poses):
-        plot_elec_cond(av_power,elec,condition,pos,freqs,fig,ax)
+        plot_elec_cond(av_power,elec,condition,pos,freqs,fig,ax,scaleMin,scaleMax)
     plt.ylim([scaleMin, scaleMax])
     plt.xlim([2, 55])
         
