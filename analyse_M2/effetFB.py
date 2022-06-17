@@ -57,11 +57,11 @@ save_ICA_files(listeICA,rawPathEffetFBseul_sujets,True)
 
 #=============== EPOCHS POWER ==========================
 #load saved Data
-EpochDataMain = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"main",True)
+EpochDataMain = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"main",True,False)
 
-EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"pendule",True)
+EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"pendule",True,False)
 
-EpochDataMainIllusion = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"mainIllusion",True)
+EpochDataMainIllusion = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"mainIllusion",True,False)
 #====================drop epochs with artefacts ======================
 #display epochs, chose which to drop
 initial_ref = 'Fz'
@@ -123,16 +123,23 @@ def computepower(EpochData):
     return liste_power_sujets
 
 liste_power_sujets_p = computepower(EpochDataPendule)
-liste_power_sujets_m = computepower(EpochDataMain)
-liste_power_sujets_mi = computepower(EpochDataMainIllusion)
-
 len(liste_power_sujets_p) == len(liste_rawPathEffetFBseul)
-save_tfr_data(liste_power_sujets_p,liste_rawPathEffetFBseul,"mainIllusion",True)
+save_tfr_data(liste_power_sujets_p,liste_rawPathEffetFBseul,"pendule",True)
 
+liste_power_sujets_m = computepower(EpochDataMain)
 len(liste_power_sujets_m) == len(liste_rawPathEffetFBseul)
 save_tfr_data(liste_power_sujets_m,liste_rawPathEffetFBseul,"main",True)
+
+liste_power_sujets_mi = computepower(EpochDataMainIllusion)
 len(liste_power_sujets_mi) == len(liste_rawPathEffetFBseul)
-save_tfr_data(liste_power_sujets_mi,liste_rawPathEffetFBseul,"pendule",True)
+save_tfr_data(liste_power_sujets_mi,liste_rawPathEffetFBseul,"mainIllusion",True)
+
+
+
+
+liste_power_sujets_p = load_tfr_data_windows(liste_rawPathEffetFBseul,"",True)
+liste_power_sujets_m = load_tfr_data_windows(liste_rawPathEffetFBseul,"",True)
+liste_power_sujets_mi = load_tfr_data_windows(liste_rawPathEffetFBseul,"",True)
 
 def print_effetFB_NFB_conditions(numSujet,scaleTopo,scaleTFR,my_cmap,fmin,fmax,mergeFigures):
     #liste_rawPathMain les mauvais sujets ont deja ete drops !

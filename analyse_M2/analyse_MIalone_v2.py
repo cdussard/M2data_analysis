@@ -105,14 +105,17 @@ for epochs_sujet in EpochData:
     i += 1
 
 save_tfr_data(liste_power_sujets,liste_rawPath_rawMIalone,"",True)
+liste_power_sujets = load_tfr_data_windows(liste_rawPath_rawMIalone,"",True)
 
-listeRaw = read_raw_data(liste_rawPath_rawMIalone[0:2])
+
+listeRaw = read_raw_data(liste_rawPath_rawMIalone[10:12])
 events = mne.events_from_annotations(listeRaw[0])[0]
 print(events)
 events = mne.events_from_annotations(listeRaw[1])[0]
 print(events)
 
-baseline = (-1, -0.1)
+#baseline = (-1, -0.1)
+baseline = (-5,-2)
 for tfr in liste_power_sujets:
     tfr.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
     
@@ -124,7 +127,8 @@ av_power_MIalone.plot_topomap(fmin=8,fmax=30,tmin=1,tmax=26.5,cmap = my_cmap,vmi
 av_power_MIalone.plot(picks="C3",fmin=3,fmax=40,vmin=-0.4,vmax=0.4)
 raw_signal.plot(block=True)
 
-av_power_main.save("../AV_TFR/all_sujets/MIalone-tfr.h5",overwrite=True)
+av_power_MIalone.save("../AV_TFR/all_sujets/MIalone-tfr.h5",overwrite=True)
+av_power_MIalone =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/MIalone-tfr.h5")[0]
 
 data = av_power_MIalone.data
 data_meanTps = np.mean(data,axis=2)
@@ -134,15 +138,26 @@ data_C4 = data_meanTps[13][:]
 
 #left motor cortex
 fig, ax = plt.subplots()
-scaleMin = -0.35
+scaleMin = -0.4
 scaleMax = 0.05
-plot_elec_cond(av_power_MIalone,"C3","MI_alone",11,freqs,fig,ax,scaleMin,scaleMax)
-plot_elec_cond(av_power_MIalone,"C4","MI_alone",13,freqs,fig,ax,scaleMin,scaleMax)
+plot_elec_cond(av_power_MIalone,"C3","MI_alone",11,freqs,fig,ax,scaleMin,scaleMax,2,26.5)
+plot_elec_cond(av_power_MIalone,"C4","MI_alone",13,freqs,fig,ax,scaleMin,scaleMax,2,26.5)
 
 #compare with NFB data
-scaleMin = -0.35
+scaleMin = -0.4
 plot_allElec(av_power_pendule,"pendule",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 plot_allElec(av_power_main,"main",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 plot_allElec(av_power_mainIllusion,"mainIllusion",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 
+raw_signal.plot(block=True)
+
+elec_name = "C3"
+elec_pos = 11
+fig, ax = plt.subplots()
+plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+plot_elec_cond(av_power_MIalone,elec_name,"MI_alone",elec_pos,freqs,fig,ax,scaleMin,scaleMax,2,26.5)
+plt.ylim([scaleMin, scaleMax])
+plt.xlim([2, 55])
 raw_signal.plot(block=True)

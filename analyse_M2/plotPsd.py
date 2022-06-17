@@ -10,6 +10,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 #sans les fonctions MNE
 
+#3 conds plot
+def plot_elec_cond(av_power,elec_name,cond,elec_position,freqs,fig,ax,scaleMin,scaleMax,tmin,tmax):
+    av_power.crop(tmin=tmin,tmax=tmax)
+    data = av_power.data
+    data_meanTps = np.mean(data,axis=2)
+    data_elec = data_meanTps[elec_position][:]
+    
+    ax.plot(freqs,data_elec, label=elec_name+" "+cond) #apres baseline
+    plt.legend(loc="upper left")
+    ax.axvline(x=8,color="black",linestyle="--")
+    ax.axvline(x=30,color="black",linestyle="--")
+    plt.ylim([scaleMin, scaleMax])
+    plt.xlim([2, 55])
+
+def plot_3conds(elec_name,elec_pos,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax):
+    freqs = np.arange(3, 85, 1)
+    fig, ax = plt.subplots()
+    plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+    plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+    plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+    plt.ylim([scaleMin, scaleMax])
+    plt.xlim([2, 55])
+    
+    #group by condition
+def plot_allElec(av_power,condition,elec_names,elec_poses,scaleMin,scaleMax,freqs):
+    fig, ax = plt.subplots()
+    for elec,pos in zip(elec_names,elec_poses):
+        plot_elec_cond(av_power,elec,condition,pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
+    plt.ylim([scaleMin, scaleMax])
+    plt.xlim([2, 55])
+            
+
 av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")[0]
 av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion-tfr.h5")[0]
 av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
@@ -27,29 +59,8 @@ plt.plot(freqs,data_C4,label="C4")
 plt.legend(loc="upper left")
 raw_signal.plot(block=True)
 
-
-#3 conds plot
-def plot_elec_cond(av_power,elec_name,cond,elec_position,freqs,fig,ax,scaleMin,scaleMax):
-    data = av_power.data
-    data_meanTps = np.mean(data,axis=2)
-    data_elec = data_meanTps[elec_position][:]
     
-    ax.plot(freqs,data_elec, label=elec_name+" "+cond) #apres baseline
-    plt.legend(loc="upper left")
-    ax.axvline(x=8,color="black",linestyle="--")
-    ax.axvline(x=30,color="black",linestyle="--")
-    plt.ylim([scaleMin, scaleMax])
-    plt.xlim([2, 55])
-
-def plot_3conds(elec_name,elec_pos,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax):
-    fig, ax = plt.subplots()
-    plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
-    plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
-    plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax,scaleMin,scaleMax)
-    plt.ylim([scaleMin, scaleMax])
-    plt.xlim([2, 55])
-    
-scaleMin = -0.3
+scaleMin = -0.4
 scaleMax = 0.05
 #left motor cortex
 plot_3conds("C3",11,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax)
@@ -60,7 +71,7 @@ plot_3conds("FC5",6,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMi
 raw_signal.plot(block=True)
 #les sortir rest VS NFB par sujet
 
-scaleMin = -0.3
+scaleMin = -0.4
 scaleMax = 0.05
 #right motor cortex (group by electrode)
 plot_3conds("C4",13,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax)
@@ -70,14 +81,7 @@ plot_3conds("FC2",8,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMi
 plot_3conds("FC6",9,av_power_pendule,av_power_main,av_power_mainIllusion,scaleMin,scaleMax)
 raw_signal.plot(block=True)
 
-#group by condition
-def plot_allElec(av_power,condition,elec_names,elec_poses,scaleMin,scaleMax,freqs):
-    fig, ax = plt.subplots()
-    for elec,pos in zip(elec_names,elec_poses):
-        plot_elec_cond(av_power,elec,condition,pos,freqs,fig,ax,scaleMin,scaleMax)
-    plt.ylim([scaleMin, scaleMax])
-    plt.xlim([2, 55])
-        
+
 
 left_MC = ["C3","CP5","CP1","FC1","FC5"]
 left_MC_pos = [11,15,16,7,6]
@@ -87,10 +91,12 @@ plot_allElec(av_power_mainIllusion,"mainIllusion",left_MC,left_MC_pos,scaleMin,s
 
 raw_signal.plot(block=True)
 
-scaleMin = -0.35
+scaleMin = -0.4
 plot_allElec(av_power_pendule,"pendule",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 plot_allElec(av_power_main,"main",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 plot_allElec(av_power_mainIllusion,"mainIllusion",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
+
+raw_signal.plot(block=True)
 
 #for all subjects 
 

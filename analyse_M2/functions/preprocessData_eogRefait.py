@@ -93,7 +93,9 @@ def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEp
     epochsCibles = []
     liste_epochsSignal = []
     liste_epochsPreICA = []
+    i = 0
     for signal,signalICA in zip(listeFilteredSignal,listeFilteredICA):
+         print(i)
          events = mne.events_from_annotations(signal)[0] #print(events)
          epochsCibles = mne.Epochs(signal,events,event_id,tmin=-dureePreEpoch,tmax = dureeEpoch,baseline=None, preload=True)#,reject=reject)#pas de picks avant ICA           
          epochsICA = mne.Epochs(signalICA,events,event_id,tmin=-dureePreEpoch,tmax = dureeEpoch,baseline=None, preload=True)#,reject=reject)
@@ -106,6 +108,7 @@ def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEp
          #print(epochsCibles)     
          liste_epochsSignal.append(epochsCibles)
          liste_epochsPreICA.append(epochsICA)
+         i += 1
     return liste_epochsPreICA,liste_epochsSignal
 
 def change_order_channels(channels,listeSignals):
@@ -126,8 +129,8 @@ def mark_bad_electrodes(listeSignals,listeElectrodesBad):
         print("t'as pas implemente la methode")
     
     return listeSignals
-        
-def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_freqs,n_ICA_components,initial_ref,event_id):
+#epochDuration = 31 pour NFB etc
+def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_freqs,n_ICA_components,initial_ref,event_id,epochDuration):
     channels = ['VEOG','HEOG','Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FT9', 'FC5', 'FC1', 'FC2', 'FC6', 'FT10', 'T7', 'C3', 'Cz', 'C4', 'T8', 'TP9','CP5','CP1','CP2','CP6','TP10', 'P7', 'P3', 'Pz', 'P4', 'P8', 'O1', 'Oz', 'O2']
     listeRaw = read_raw_data(listeRawPath)
     #filtre a 1Hz le signal pour ICA mais a 0.1 Hz le signal a analyser
@@ -137,7 +140,7 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
     listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,['TP9','TP10','FT9','FT10'])
     listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,['TP9','TP10','FT9','FT10'])
     #epoching
-    dureeEpoch = 31#29.3#entre 28.6 et 31.1 24s en vrai
+    dureeEpoch = epochDuration#29.3#entre 28.6 et 31.1 24s en vrai
     dureePreEpoch = 5.0
     reject = dict(eeg=50e-5 # unit: V (EEG channels) & 100 on drop rien, a 10 on drop tout ?
               )
