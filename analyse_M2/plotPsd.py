@@ -116,3 +116,72 @@ for sujet in range(5):
     plot_allElec(tfr_main_sujet,"main",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
     plot_allElec(tfr_mainIllusion_sujet,"mainIllusion",["C3","C4"],[11,13],scaleMin,scaleMax,freqs)
 raw_signal.plot(block=True)
+
+
+
+#afficher la meme chose mais avec un intervalle de confiance sur les sujets / par sujet
+import numpy as np 
+from scipy.stats import t
+import scipy
+
+def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
+    #load all subjects
+    #S00
+    liste_C3 = []
+    listeNumSujetsFinale_mod = listeNumSujetsFinale[0:1]+listeNumSujetsFinale[2:]
+    listeNumSujetsFinale_mod = listeNumSujetsFinale_mod[0:3]+listeNumSujetsFinale_mod[4:]
+    data_freq_suj = np.zeros(shape=(23,82))
+    for suj in range(23):
+        print(suj)
+        name_suj = listeNumSujetsFinale_mod[suj]
+        mat = scipy.io.loadmat('../MATLAB_DATA/'+name_suj+'/'+name_suj+'-'+nomCond+'timePooled.mat')#pendule pour instant
+        data_C3_suj = mat["data"][11]
+        liste_C3.append(data_C3_suj)
+        for freq in range(82):#all freqs parcourir sujets 
+            data_freq_suj[suj][freq] = data_C3_suj[freq]
+        
+    
+    #now estimate the confidence interval point for each freq
+    data_freq_mean  = []
+    data_lower_cI = []
+    data_upper_cI = []
+    for freq in range(82-(85-fmax)):
+        print("frequence : "+str(3+freq) + " Hz")
+        x = data_freq_suj[:,freq]#3Hz
+        m = x.mean() 
+        s = x.std() 
+        dof = 22
+        confidence = 0.95
+        t_crit = np.abs(t.ppf((1-confidence)/2,dof))
+        print(len(x))
+        data_lower_cI.append((m-s*t_crit/np.sqrt(len(x))))
+        data_upper_cI.append((m+s*t_crit/np.sqrt(len(x))))
+                             
+        print((m-s*t_crit/np.sqrt(len(x)), m+s*t_crit/np.sqrt(len(x))) )
+        data_freq_mean.append(np.mean(data_freq_suj[:,freq]))
+        
+    #now plot this stuff 
+    
+    freqs = range(3,fmax,1)
+    
+    #fig,ax = plt.subplots()
+    ax.plot(freqs, data_freq_mean, '-', color=colorPlot,label=nomCond)
+    ax.set_title('Frequency')
+    ax.set_xticks(freqs)
+    ax.set_xticklabels(freqs)
+    ax.set_ylabel('ERD')
+    ax.axvline(x=8,color="black",linestyle="--")
+    ax.axvline(x=30,color="black",linestyle="--")
+    plt.legend(loc="upper left")
+    ax.fill_between(freqs, data_lower_cI,data_upper_cI , alpha=0.2, color=colorPlot)
+
+fig,ax = plt.subplots()
+plot_oneCond_freqDesync('pendule','tab:orange',fig,ax,55)
+plot_oneCond_freqDesync('main','tab:green',fig,ax,55)
+raw_signal.plot(block=True)
+
+fig,ax = plt.subplots()
+plot_oneCond_freqDesync('main','tab:green',fig,ax,55)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig,ax,55)
+raw_signal.plot(block=True)
+
