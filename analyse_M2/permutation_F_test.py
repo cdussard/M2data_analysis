@@ -77,15 +77,18 @@ def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainI
         tfr_main.pick_channels([elec])
         tfr_pendule.pick_channels([elec])
     #create ANOVA table "faire evoluer pour plusieurs elecs a la fois
-    tableau_mainPendule = np.zeros(shape=(23,23))
-    tableau_mainMainIllusion = np.zeros(shape=(23,23))
+    tableau_mainPendule = np.zeros(shape=(23,fmax-fmin+1))#23 = nb sujets
+    tableau_mainMainIllusion = np.zeros(shape=(23,fmax-fmin+1))
+    tableau_main = np.zeros(shape=(23,fmax-fmin+1))
+    tableau_pendule = np.zeros(shape=(23,fmax-fmin+1))
+    tableau_mainIllusion = np.zeros(shape=(23,fmax-fmin+1))
     for i in range(23):#sujets
         print("sujet"+str(i))
         #ecraser forme electrodes
         liste_tfr_pendule[i].data = np.mean(liste_tfr_pendule[i].data,axis=0)
         liste_tfr_main[i].data = np.mean(liste_tfr_main[i].data,axis=0)
         liste_tfr_mainIllusion[i].data = np.mean(liste_tfr_mainIllusion[i].data,axis=0)
-        powerFreq_pendule = np.median(liste_tfr_pendule[i].data,axis=1)#verifier
+        powerFreq_pendule = np.median(liste_tfr_pendule[i].data,axis=1)#OK donc dim = freq x time
         #pool time
         powerFreq_main = np.median(liste_tfr_main[i].data,axis=1)
         powerFreq_mainI = np.median(liste_tfr_mainIllusion[i].data,axis=1)
@@ -99,11 +102,35 @@ def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainI
             tableau_mainPendule[i][j] = mainMoinsPendule_i[j]
             print(mainMoinsPendule_i[j])
             tableau_mainMainIllusion[i][j] = mainMoinsMainIllusion_i[j]
-    return tableau_mainPendule,tableau_mainMainIllusion
+            tableau_main[i][j] = powerFreq_main[j]
+            tableau_pendule[i][j] = powerFreq_pendule[j]
+            tableau_mainIllusion[i][j] = powerFreq_mainI[j]
+    return tableau_mainPendule,tableau_mainMainIllusion,tableau_main,tableau_pendule,tableau_mainIllusion
    
 liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
-tableau_mainPendule,tableau_mainMainIllusion = data_freq_tTest_perm("C3",8,30,2.5,26.8,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
+tableau_mainPendule,tableau_mainMainIllusion,powerFreq_main,powerFreq_pendule,powerFreq_mainI = data_freq_tTest_perm("C3",8,30,2.5,26.8,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
 listeSuj = [0,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+
+#y a t'il une desynchro plus forte que zero
+T0, p_values, H0 = mne.stats.permutation_t_test(powerFreq_main,1000000)
+print(T0)
+print(p_values)
+print(H0)
+
+T0, p_values, H0  = mne.stats.permutation_t_test(powerFreq_mainI,1000000)
+print(T0)
+print(p_values)
+print(H0)
+significant_freqs = p_values <= 0.05
+print(significant_freqs)
+
+T0, p_values, H0  = mne.stats.permutation_t_test(powerFreq_pendule,1000000)
+print(T0)
+print(p_values)
+print(H0)
+significant_freqs = p_values <= 0.05
+print(significant_freqs)
+
 for sujet in range(23):
     print("sujet n°"+str(listeSuj[sujet]))
     mean_12_15 = np.mean(tableau_mainPendule[sujet][4:8])#12-15Hz
@@ -113,7 +140,7 @@ for sujet in range(23):
         print("POS")
     print(mean_12_15)
 
-#t test avec permutation
+#t test avec permutation : y a t'il une difference de desynchro main/pendule plus forte que zero
 res = mne.stats.permutation_t_test(tableau_mainPendule,100000)
 
 res[0]
@@ -134,4 +161,10 @@ for p in pval2:
     
     
 #avec clustering
-res_c = mne.stats.permutation_cluster_test(tableau_mainPendule)
+res_c = mne.stats.permutation_cluster_test(tableau_mainPendule,n_permutations=1000)
+print(res_c[0])#F
+print(res_c[1])#cluster
+
+print(res_c[2])#cluster p value
+print(res_c[3])#H0
+
