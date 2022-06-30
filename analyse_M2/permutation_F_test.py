@@ -161,6 +161,20 @@ T0, p_values_m, H0 = mne.stats.permutation_t_test(tableau_main,1000000)
 T0, p_values_p, H0  = mne.stats.permutation_t_test(tableau_pendule,1000000)
 T0, p_values_mi, H0  = mne.stats.permutation_t_test(tableau_mainIllusion,1000000)
 
+from itertools import compress
+significant_freqs_m = p_values_m <= 0.05
+freqSignif_m = list(compress(freqValues, significant_freqs_m))
+print(freqSignif_m)
+
+significant_freqs_p = p_values_p <= 0.05
+freqSignif_p = list(compress(freqValues, significant_freqs_p))
+print(freqSignif_p)
+
+significant_freqs_mi = p_values_mi <= 0.05
+freqSignif_mi = list(compress(freqValues, significant_freqs_mi))
+print(freqSignif_mi)
+
+
 log_p_values_m = np.log10(p_values_m)
 log_p_values_p = np.log10(p_values_p)
 log_p_values_mi = np.log10(p_values_mi)
@@ -168,6 +182,7 @@ log_p_values_mi = np.log10(p_values_mi)
 
 
 freqValues = range(3,85,1)
+fig,ax = plt.subplots()
 plt.plot(freqValues,log_p_values_m,label="main")
 plt.plot(freqValues,log_p_values_mi,label="main+vib")
 plt.plot(freqValues,log_p_values_p,label="pendule")
