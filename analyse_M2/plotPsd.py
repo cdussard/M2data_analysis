@@ -118,13 +118,12 @@ for sujet in range(5):
 raw_signal.plot(block=True)
 
 
-
 #afficher la meme chose mais avec un intervalle de confiance sur les sujets / par sujet
 import numpy as np 
 from scipy.stats import t
 import scipy
 
-def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
+def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax,confidence,num_elec):
     #load all subjects
     #S00
     liste_C3 = []
@@ -135,7 +134,7 @@ def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
         print(suj)
         name_suj = listeNumSujetsFinale_mod[suj]
         mat = scipy.io.loadmat('../MATLAB_DATA/'+name_suj+'/'+name_suj+'-'+nomCond+'timePooled.mat')#pendule pour instant
-        data_C3_suj = mat["data"][11]
+        data_C3_suj = mat["data"][num_elec]
         liste_C3.append(data_C3_suj)
         for freq in range(82):#all freqs parcourir sujets 
             data_freq_suj[suj][freq] = data_C3_suj[freq]
@@ -151,7 +150,7 @@ def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
         m = x.mean() 
         s = x.std() 
         dof = 22
-        confidence = 0.95
+        confidence = confidence
         t_crit = np.abs(t.ppf((1-confidence)/2,dof))
         print(len(x))
         data_lower_cI.append((m-s*t_crit/np.sqrt(len(x))))
@@ -163,6 +162,7 @@ def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
     #now plot this stuff 
     
     freqs = range(3,fmax,1)
+    freqs_ticks = range(3,fmax,3)
     
     #fig,ax = plt.subplots()
     ax.plot(freqs, data_freq_mean, '-', color=colorPlot,label=nomCond)
@@ -170,18 +170,48 @@ def plot_oneCond_freqDesync(nomCond,colorPlot,fig,ax,fmax):
     ax.set_xticks(freqs)
     ax.set_xticklabels(freqs)
     ax.set_ylabel('ERD')
+    ax.axhline(y=0,color="black",linestyle="dotted")
     ax.axvline(x=8,color="black",linestyle="--")
     ax.axvline(x=30,color="black",linestyle="--")
-    plt.legend(loc="upper left")
+    ax.set_ylim([-0.45,0.15])
+    ax.legend(loc="upper left")
+    ax.set_xticks(freqs_ticks)
     ax.fill_between(freqs, data_lower_cI,data_upper_cI , alpha=0.2, color=colorPlot)
 
+#11 = C3
 fig,ax = plt.subplots()
-plot_oneCond_freqDesync('pendule','tab:orange',fig,ax,55)
-plot_oneCond_freqDesync('main','tab:green',fig,ax,55)
+plot_oneCond_freqDesync('pendule','tab:orange',fig,ax,55,0.99,11)
+plot_oneCond_freqDesync('main','tab:green',fig,ax,55,0.99,11)
 raw_signal.plot(block=True)
 
 fig,ax = plt.subplots()
-plot_oneCond_freqDesync('main','tab:green',fig,ax,55)
-plot_oneCond_freqDesync('mainIllusion','tab:blue',fig,ax,55)
+plot_oneCond_freqDesync('main','tab:green',fig,ax,55,0.99,11)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig,ax,55,0.99,11)
 raw_signal.plot(block=True)
 
+#C3 = 11
+
+fig, (ax1,ax2,ax3) = plt.subplots(1,3, sharey=True)
+fig.suptitle('C3 95% confidence interval (n=23)')
+plot_oneCond_freqDesync('pendule','tab:orange',fig,ax1,80,0.95,11)
+plot_oneCond_freqDesync('main','tab:green',fig,ax2,80,0.95,11)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig,ax3,80,0.95,11)
+fig.tight_layout()
+
+#C4 = 13
+fig2, (ax1,ax2,ax3) = plt.subplots(1,3, sharey=True)
+fig.suptitle('C4 95% confidence interval (n=23)')
+plot_oneCond_freqDesync('pendule','tab:orange',fig2,ax1,80,0.95,13)
+plot_oneCond_freqDesync('main','tab:green',fig2,ax2,80,0.95,13)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig2,ax3,80,0.95,13)
+raw_signal.plot(block=True)
+
+fig, axs = plt.subplots(2, 3,sharey=True,sharex=True)
+fig.suptitle('C3/C4 95% confidence interval (n=23)')
+plot_oneCond_freqDesync('pendule','tab:orange',fig,axs[0, 0],80,0.95,11)
+plot_oneCond_freqDesync('main','tab:green',fig,axs[0, 1],80,0.95,11)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig,axs[0, 2],80,0.95,11)
+plot_oneCond_freqDesync('pendule','tab:orange',fig2,axs[1, 0],80,0.95,13)
+plot_oneCond_freqDesync('main','tab:green',fig2,axs[1, 1],80,0.95,13)
+plot_oneCond_freqDesync('mainIllusion','tab:blue',fig2,axs[1, 2],80,0.95,13)
+raw_signal.plot(block=True)
