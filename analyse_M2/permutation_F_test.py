@@ -6,17 +6,17 @@ Created on Wed Apr 20 19:22:01 2022
 """
 import pandas as pd
 import mne
-douzeQuinzeHzData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
-df_douzeQuinzeHzData=douzeQuinzeHzData.iloc[: , 1:]
-df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0:2]
-res=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=10000, tail=0)
-res2=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=1000, tail=0)
+# douzeQuinzeHzData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
+# df_douzeQuinzeHzData=douzeQuinzeHzData.iloc[: , 1:]
+# df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0:2]
+# res=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=10000, tail=0)
+# res2=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=1000, tail=0)
 
-df_douzeQuinzeHzData_mMi = df_douzeQuinzeHzData.iloc[:,1:3]
-mne.stats.permutation_t_test(df_douzeQuinzeHzData_mMi, n_permutations=10000, tail=0)
+# df_douzeQuinzeHzData_mMi = df_douzeQuinzeHzData.iloc[:,1:3]
+# mne.stats.permutation_t_test(df_douzeQuinzeHzData_mMi, n_permutations=10000, tail=0)
 
-#difference main vs pendule
-df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0]-df_douzeQuinzeHzData.iloc[:,0]
+# #difference main vs pendule
+# df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0]-df_douzeQuinzeHzData.iloc[:,0]
 
 #dans l'ideal il faudrait avoir un permutation F test,
 # a voir si on peut recuperer l'implementation MNE et l'etendre au F
@@ -24,7 +24,7 @@ df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0]-df_douzeQuinzeHzData.il
 from functions.load_savedData import *
 from handleData_subject import createSujetsData
 from functions.load_savedData import *
-from functions.frequencyPower_displays import *
+#from functions.frequencyPower_displays import *
 import numpy as np
 import os
 import pandas as pd
@@ -357,7 +357,8 @@ raw_signal.plot(block=True)
 p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_pend.txt")
 p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_main.txt")
 p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_mIll.txt")
-
+legends = pd.read_excel("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalueperm_allElec_allFreq_main.xlsx")
+elec_leg = legends["channel\\freq"]
 imagesc.plot(p_pend)
 imagesc.plot(p_main)
 imagesc.plot(p_mIll)
@@ -372,23 +373,51 @@ masked_mi = np.ma.masked_where((p_mIll > pvalue) , mIll)
 imagesc.plot(-masked_p,cmap="Blues")
 imagesc.plot(-masked_m,cmap="Blues")
 imagesc.plot(-masked_mi,cmap="Blues")
+
+
+#sans image sc
+gridspec_kw={'width_ratios': [1,1,1],
+                           'height_ratios': [1],
+                       'wspace': 0.05,#constrained_layout=True
+                       'hspace': 0.05}
+fig, axs = plt.subplots(1,3, sharey=True,sharex=True, figsize=(20, 7),gridspec_kw=gridspec_kw,constrained_layout=True)
+vmin = 0.9
+vmax = 2.1
+img = axs[0].imshow(-masked_p, extent=[0, 1, 0, 1],cmap="Blues", aspect='auto',interpolation='none',vmin=vmin,vmax=vmax,label="pendulum")
+axs[0].text(0.12, 1.02, 'Virtual pendulum')
+
+axs[1].imshow(-masked_m, extent=[0, 1, 0, 1],cmap="Blues", aspect='auto',interpolation='none',vmin=vmin,vmax=vmax)
+axs[1].text(0.12, 1.02, 'Virtual hand')
+axs[2].imshow(-masked_mi, extent=[0, 1, 0, 1],cmap="Blues", aspect='auto',interpolation='none',vmin=vmin,vmax=vmax)
+axs[2].text(0.12, 1.02, 'Virtual hand with vibrations')
+fig.colorbar(img, location = 'right')
+elecs = elec_leg 
+#plt.subplots_adjust(wspace=0.2, hspace=0.05)
+freq_leg = np.arange(3,84,4)
+freq_leg_str =[str(f) for f in freq_leg]
+#axs[0].axvline(x=8,color="red")
+plt.xticks(np.linspace(0,1,21),freq_leg_str)
+x8Hz = 0.061
+x30Hz = 0.34
+col = "black"
+ls = "--"
+lw = 0.7
+for ax in axs.flat:
+    ax.axvline(x=x8Hz,color=col,ls=ls,lw=lw)
+    ax.axvline(x=x30Hz,color=col,ls=ls,lw=lw)
+plt.yticks(np.linspace(1/(len(elecs)*2.5),1-1/(len(elecs)*2.5),len(elecs)),elecs.iloc[::-1])
+for ax in axs.flat:
+    ax.axhline(y=0.107,color="dimgray",lw=0.25)
+    ax.axhline(y=0.286,color="dimgray",lw=0.25)
+    ax.axhline(y=0.428,color="dimgray",lw=0.25)
+    ax.axhline(y=0.608,color="dimgray",lw=0.25)
+    ax.axhline(y=0.75,color="dimgray",lw=0.25)
+    ax.axhline(y=0.9293,color="dimgray",lw=0.25)
+
+#plt.tight_layout(pad=0.04) 
 raw_signal.plot(block=True)#specifier le x
-#masked_data = np.ma.masked_where(p_pend < .05, p_pend)
-#mettre a zero au dela de 0.05 
 
-#===2.avec un masque continu et lineairement remplacer les valeurs entre 0 et 0.05 ensuite
-values_cont = np.zeros(shape=(28,82))
-for line in range(28):
-    for col in range(82):
-        pval = p_pend[line,col]
-        if pval>pvalue:
-            val = 0
-        else:
-            val = mIll[line,col]*(1-pval)
-        values_cont[line,col]=val
 
-imagesc.plot(-values_cont,cmap="Blues")
-raw_signal.plot(block=True)
 
 #ensuite creer un masque transparent sauver : plus tu es transparent plus tu es significatif
 #analyse contre zero, entre 3 et 84Hz, 
@@ -416,10 +445,10 @@ raw_signal.plot(block=True)
 # dfd = 23 - 3  # degrees of freedom denominator
 # thresh = scipy.stats.f.ppf(1 - pval, dfn=dfn, dfd=dfd)  # F distribution
 
-# from mne.channels import find_ch_adjacency
-# #adjacency, ch_names = mne.channels.read_ch_adjacency("easycap32ch-avg")
-# adjacency, ch_names = find_ch_adjacency(EpochDataMain[0].drop_channels(["TP9","TP10","FT9","FT10"]).info, ch_type='eeg')
-# print(type(adjacency))  # it's a sparse matrix!
+from mne.channels import find_ch_adjacency
+#adjacency, ch_names = mne.channels.read_ch_adjacency("easycap32ch-avg")
+#adjacency, ch_names = find_ch_adjacency(EpochDataMain[0].drop_channels(["TP9","TP10","FT9","FT10"]).info, ch_type='eeg')
+#print(type(adjacency))  # it's a sparse matrix!
 
 # fig, ax = plt.subplots(figsize=(5, 4))
 # ax.imshow(adjacency.toarray(), cmap='gray', origin='lower',
