@@ -395,7 +395,6 @@ elecs = elec_leg
 #plt.subplots_adjust(wspace=0.2, hspace=0.05)
 freq_leg = np.arange(3,84,4)
 freq_leg_str =[str(f) for f in freq_leg]
-#axs[0].axvline(x=8,color="red")
 plt.xticks(np.linspace(0,1,21),freq_leg_str)
 x8Hz = 0.061
 x30Hz = 0.34
@@ -407,13 +406,8 @@ for ax in axs.flat:
     ax.axvline(x=x30Hz,color=col,ls=ls,lw=lw)
 plt.yticks(np.linspace(1/(len(elecs)*2.5),1-1/(len(elecs)*2.5),len(elecs)),elecs.iloc[::-1])
 for ax in axs.flat:
-    ax.axhline(y=0.107,color="dimgray",lw=0.25)
-    ax.axhline(y=0.286,color="dimgray",lw=0.25)
-    ax.axhline(y=0.428,color="dimgray",lw=0.25)
-    ax.axhline(y=0.608,color="dimgray",lw=0.25)
-    ax.axhline(y=0.75,color="dimgray",lw=0.25)
-    ax.axhline(y=0.9293,color="dimgray",lw=0.25)
-
+    for elecPos in [0.107,0.286,0.428,0.608,0.75,0.9293]:
+        ax.axhline(y=elecPos,color="dimgray",lw=0.25)
 #plt.tight_layout(pad=0.04) 
 raw_signal.plot(block=True)#specifier le x
 
