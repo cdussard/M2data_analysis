@@ -6,17 +6,6 @@ Created on Wed Apr 20 19:22:01 2022
 """
 import pandas as pd
 import mne
-# douzeQuinzeHzData = pd.read_csv("./data/Jasp_anova/ANOVA_12_15Hz_C3_long.csv")
-# df_douzeQuinzeHzData=douzeQuinzeHzData.iloc[: , 1:]
-# df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0:2]
-# res=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=10000, tail=0)
-# res2=mne.stats.permutation_t_test(df_douzeQuinzeHzData_mP, n_permutations=1000, tail=0)
-
-# df_douzeQuinzeHzData_mMi = df_douzeQuinzeHzData.iloc[:,1:3]
-# mne.stats.permutation_t_test(df_douzeQuinzeHzData_mMi, n_permutations=10000, tail=0)
-
-# #difference main vs pendule
-# df_douzeQuinzeHzData_mP = df_douzeQuinzeHzData.iloc[:,0]-df_douzeQuinzeHzData.iloc[:,0]
 
 #dans l'ideal il faudrait avoir un permutation F test,
 # a voir si on peut recuperer l'implementation MNE et l'etendre au F
@@ -60,6 +49,7 @@ def copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
 #main vs pendule
 def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
     mode_baseline = 'logratio'
+    n_sujets = len(liste_tfr_pendule)
     baseline = (-3,-1)
     #compute baseline (first because after we crop time)
     for tfr_m,tfr_mi,tfr_p in zip(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
@@ -77,12 +67,12 @@ def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainI
         tfr_main.pick_channels([elec])
         tfr_pendule.pick_channels([elec])
     #create ANOVA table "faire evoluer pour plusieurs elecs a la fois
-    tableau_mainPendule = np.zeros(shape=(23,fmax-fmin+1))#23 = nb sujets
-    tableau_mainMainIllusion = np.zeros(shape=(23,fmax-fmin+1))
-    tableau_main = np.zeros(shape=(23,fmax-fmin+1))
-    tableau_pendule = np.zeros(shape=(23,fmax-fmin+1))
-    tableau_mainIllusion = np.zeros(shape=(23,fmax-fmin+1))
-    for i in range(23):#sujets
+    tableau_mainPendule = np.zeros(shape=(n_sujets,fmax-fmin+1))#23 = nb sujets
+    tableau_mainMainIllusion = np.zeros(shape=(n_sujets,fmax-fmin+1))
+    tableau_main = np.zeros(shape=(n_sujets,fmax-fmin+1))
+    tableau_pendule = np.zeros(shape=(n_sujets,fmax-fmin+1))
+    tableau_mainIllusion = np.zeros(shape=(n_sujets,fmax-fmin+1))
+    for i in range(n_sujets):#sujets
         print("sujet"+str(i))
         #ecraser forme electrodes
         liste_tfr_pendule[i].data = np.mean(liste_tfr_pendule[i].data,axis=0)
@@ -274,6 +264,7 @@ liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_
 tableau_main,tableau_pendule,tableau_mainIllusion = data_freq_tTest_perm_allElec(3,84,2.5,26.8,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
 
 #nouvel essai pas opti du tout 
+av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
 liste_pendule = []
 liste_main = []
 liste_mainIllusion = []
@@ -288,36 +279,37 @@ for elec in av_power_pendule.ch_names:
     
 #ICI CA MARCHE
 def get_pvalue_allElec_allFreq(liste_condition,npermut):
+    n_sujets = liste_condition[0].shape[0]
     liste_suj_data = []
-    for suj in range(23):
+    for suj in range(n_sujets):
         for elec in range(28):
+            print("suj"+str(suj))
             liste_suj_data.append(liste_condition[elec][suj])
     
-    fullTableTest_condition = np.zeros(shape=(23,82*28))
-    for i in range(23):#sujet
+    fullTableTest_condition = np.zeros(shape=(n_sujets,82*28))
+    for i in range(n_sujets):#sujet
         for j in range(28):#electrodes
             fullTableTest_condition[i:i+1,j*82:(j+1)*82] = liste_suj_data[(28*i)+j]
           
-    T0, p_values_p , H0  = mne.stats.permutation_t_test(fullTableTest_condition,200000)
+    T0, p_values , H0  = mne.stats.permutation_t_test(fullTableTest_condition,npermut)
     plt.hist(H0)
-    significant_freqs = p_values_mi <= 0.05
+    significant_freqs = p_values <= 0.05
     print(significant_freqs)
     
     readable_pValue_table = np.zeros(shape=(28,82)) 
     for i in range(28):#elec
         for j in range(82):#freq
-            readable_pValue_table[i,j] = p_values_p[(82*i)+j]    
+            readable_pValue_table[i,j] = p_values[(82*i)+j]    
     return readable_pValue_table
 
-readable_pValue_table_pendule =  get_pvalue_allElec_allFreq(liste_pendule,200000)      
-np.savetxt('pvalueperm_allElec_allFreq_pendule.csv',readable_pValue_table_pendule,delimiter=",")
-io.savemat(".mat", {'data': averageTFR.data })
+readable_pValue_table_pendule =  get_pvalue_allElec_allFreq(liste_pendule,20000)      
+np.savetxt('pvalueperm_allElec_allFreq_pendule_20000perm.txt',readable_pValue_table_pendule,delimiter=",")
 
-readable_pValue_table_main =  get_pvalue_allElec_allFreq(liste_main,200000)      
-np.savetxt('pvalueperm_allElec_allFreq_main.csv',readable_pValue_table_main,delimiter=",")
+readable_pValue_table_main =  get_pvalue_allElec_allFreq(liste_main,20000)      
+np.savetxt('pvalueperm_allElec_allFreq_main_20000perm.txt',readable_pValue_table_main,delimiter=",")
 
-readable_pValue_table_mainIllusion =  get_pvalue_allElec_allFreq(liste_mainIllusion,200000)      
-np.savetxt('pvalueperm_allElec_allFreq_mainIllusion.csv',readable_pValue_table_mainIllusion,delimiter=",")
+readable_pValue_table_mainIllusion =  get_pvalue_allElec_allFreq(liste_mainIllusion,20000)      
+np.savetxt('pvalueperm_allElec_allFreq_mainIllusion_20000perm.txt',readable_pValue_table_mainIllusion,delimiter=",")
 
 #mtn on veut faire la meme chose mais avec une taille d'effet au lieu de p value
 # d de cohen = moyGroup1 sur 23 sujets - moyGroup2(=0 pck test VS 0)
@@ -333,6 +325,7 @@ def get_dcohen_allElec_allFreq(liste_condition):
         ndarray[elec]=dcohen
             
     return ndarray
+
 d_p = get_dcohen_allElec_allFreq(liste_pendule)
 d_m = get_dcohen_allElec_allFreq(liste_main)
 d_mi = get_dcohen_allElec_allFreq(liste_mainIllusion)
@@ -354,9 +347,9 @@ imagesc.plot(mIll)
 raw_signal.plot(block=True)
 
 #creer le mask
-p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_pend.txt")
-p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_main.txt")
-p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalue_mIll.txt")
+p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/again/pvalue_pend.txt")
+p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/again/pvalue_main.txt")
+p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/again/pvalue_mIll.txt")
 legends = pd.read_excel("C:/Users/claire.dussard/OneDrive - ICM/Bureau/allElecFreq_VSZero/pvalue/pvalueperm_allElec_allFreq_main.xlsx")
 elec_leg = legends["channel\\freq"]
 imagesc.plot(p_pend)

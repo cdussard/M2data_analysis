@@ -7,12 +7,12 @@ Created on Mon Jan 17 10:51:33 2022
 """
 
 
-liste_tfr = load_tfr_data_windows(rawPath_main_sujets[0:2],"",True)
+liste_tfr = load_tfr_data_windows(liste_rawPathMain[0:2],"",True)
 save_elec_fr_data_to_mat(liste_tfr,rawPath_main_sujets,"main",True,(-3,-1),True)
 
-
+ch_names = liste_tfr[0].info["ch_names"]
 import os.path as op
- import mne
+import mne
 
 # df = yo.to_data_frame()
 
@@ -21,7 +21,11 @@ import os.path as op
 data_num = yo.data
 
 sio.savemat('test2.mat', {'data': data_num})
-
+['Fp1', 'Fp2', 'F7',
+ 'F3', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7',
+ 'C3', 'Cz', 'C4', 'T8', 'CP5', 'CP1', 'CP2', 'CP6',
+ 'P7', 'P3', 'Pz', 'P4',
+ 'P8', 'O1', 'Oz', 'O2', 'Fz']
 
 
 save_tfr_data_to_mat(load_tfr_data(rawPath_main_sujets,""),rawPath_main_sujets,"main",True,(-3,-1))

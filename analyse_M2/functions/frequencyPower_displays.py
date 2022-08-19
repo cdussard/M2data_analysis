@@ -57,7 +57,8 @@ def computeMovingAverage(C3values,nvalues):#35 pour tout data, 24 si crop #FONCT
         compteur_moyenne += 1
     return arr_C3_movAverage
 
-#yo = computeMovingAverage(C3_freq_main,28) 
+C3_freq_main = compute_freqBand_condition(8,30,av_power_main)
+yo = computeMovingAverage(C3_freq_main[0],28) 
   
 def computeSlidingWindowEpochs(C3_freq,nvalues):
     arr_C3_movAverage_freq = np.zeros(shape=(C3_freq.shape[0],nvalues))

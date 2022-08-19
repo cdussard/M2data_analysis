@@ -86,11 +86,11 @@ av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main
 av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
 
 
-def animate_topo(data,doBaseline,tmin,tmax,step):
+def animate_topo(data,doBaseline,tmin,tmax,step,fmin,fmax):
     if doBaseline:
         data.apply_baseline(baseline=(-3,-1),mode="logratio")
     data_copy = data.copy()
-    data_copy.crop(fmin=8,fmax=30)
+    data_copy.crop(fmin=fmin,fmax=fmax)
     
     data_8_30 = np.mean(data_copy.data,axis=1)
     
@@ -119,10 +119,10 @@ fullAverage = mne.grand_average(list_data)
 fullAverage.plot(picks="C3",fmax=40)
 raw_signal.plot(block=True)
 
-v = 0.25
-av_power_pendule.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
-av_power_main.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
-av_power_mainIllusion.plot(picks="C3",fmin=30,fmax=80,vmax=v,vmin=-v)
+v = 0.3
+av_power_pendule.plot(picks="C3",fmin=3,fmax=50,vmax=v,vmin=-v)
+av_power_main.plot(picks="C3",fmin=3,fmax=50,vmax=v,vmin=-v)
+av_power_mainIllusion.plot(picks="C3",fmin=3,fmax=50,vmax=v,vmin=-v)
 raw_signal.plot(block=True)
 
 anim = animate_topo(av_power_pendule,False,0,24,1)
@@ -132,5 +132,25 @@ anim = animate_topo(av_power_mainIllusion,False,0,24,1)
 anim.save('../images/animation_mainVibrations_full.gif', writer='imagemagick', fps=3)#s011 main
 
 anim = animate_topo(av_power_main,False,0,24,1)
-anim.save('../images/animation_main_full.gif', writer='imagemagick', fps=3)#s011 main
+anim.save('../images/animation_main.gif', writer='imagemagick', fps=3)#s011 main
+
+v = 0.25
+av_power_pendule.plot(picks="C3",fmin=3,fmax=80,vmax=v,vmin=-v)
+av_power_pendule.plot(picks=["FC1","CP5","CP1","CP5","C3"],fmin=3,fmax=80,vmax=v,vmin=-v,combine="mean")
+av_power_main.plot(picks=["FC1","CP5","CP1","CP5","C3"],fmin=3,fmax=80,vmax=v,vmin=-v,combine="mean")
+av_power_main.plot(picks="C3",fmin=3,fmax=80,vmax=v,vmin=-v)
+av_power_mainIllusion.plot(picks=["FC1","CP5","CP1","CP5","C3"],fmin=3,fmax=80,vmax=v,vmin=-v,combine="mean")
+av_power_mainIllusion.plot(picks="C3",fmin=3,fmax=80,vmax=v,vmin=-v)
+raw_signal.plot(block=True)
+
+
+# epoch_test = mne.Epochs(av_power_pendule,None)
+# epoch_test.plot_psd(fmin=3,fmax=85,tmin=2,tmax=26.5)
+# raw_signal.plot(block=True)
+
+f, ax = plt.subplots()
+ax.plot(freqs, av_power_pendule, color='k')
+ax.set(title='Multitaper PSD (gradiometers)', xlabel='Frequency (Hz)',
+       ylabel='Power Spectral Density (dB)')
+plt.show()
 

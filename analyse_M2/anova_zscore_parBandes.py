@@ -44,6 +44,7 @@ def copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
 
 
 def anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,mode_baseline,fmin,fmax,tmin,tmax,elec):
+    n_sujets = len(liste_tfr_pendule)
     baseline = (-3,-1)
     #compute baseline (first because after we crop time)
     for tfr_m,tfr_mi,tfr_p in zip(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
@@ -62,9 +63,10 @@ def anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,mode
         tfr_pendule.pick_channels([elec])
   
     #create ANOVA table "faire evoluer pour plusieurs elecs a la fois
-    tableauANOVA = np.zeros(shape=(23,3))
-    tableauANOVAmediane = np.zeros(shape=(23,3))
-    for i in range(23):
+    tableauANOVA = np.zeros(shape=(n_sujets,3))
+    tableauANOVAmediane = np.zeros(shape=(n_sujets,3))
+    
+    for i in range(n_sujets):
         #pool power
         powerOverTime8_30Hz_pendule = np.mean(liste_tfr_pendule[i].data,axis=1)
         powerOverTime8_30Hz_main = np.mean(liste_tfr_main[i].data,axis=1)
@@ -150,48 +152,60 @@ liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_
 moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",12,15,2.5,26.8,"C3")
 anovaMediane_c3_12_15hz,anovaMean_c3_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz,False,"")
 
-#1 ANOVA POUR 4 BANDES avec C3 ELECTRODES
-df = pd.DataFrame(columns=["elec","sujet","bandeFreq","value","feedback"])
-elecs = ["C3","Cz","C4"]
-bandesDepart = [8,12,15,20,13]
-bandesFin = [12,15,20,30,30]
-for elec in elecs:
-    for i in range(len(bandesDepart)):
-        bandeDepart = bandesDepart[i]
-        bandeFin = bandesFin[i]
-        liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
-        moy_band,med_band= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",bandeDepart,bandeFin,2.5,26.8,elec)
-              #        tableauANOVAmediane[i][0] = valuePower8_30Hz_pendule_med
-                    #  tableauANOVAmediane[i][1] = valuePower8_30Hz_main_med
-                     # tableauANOVAmediane[i][2] = valuePower8_30Hz_mainIllusion_med
-        for j in range(23):
-            data_sujet_pendule = med_band[j][0]
-            data_sujet_main = med_band[j][1]
-            data_sujet_mainIllusion = med_band[j][2]
-    
-            data_sujet_pendule = {'elec': elec,
-                                          "sujet": allSujetsDispo[j],
-                                          "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
-                                          "value":data_sujet_pendule,
-                                          "feedback":"pendule"
-                                          }
-            data_sujet_main = {'elec': elec,
-                                          "sujet": allSujetsDispo[j],
-                                          "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
-                                          "value":data_sujet_main,
-                                          "feedback":"main"
-                                          }
-            data_sujet_mainVibrations = {'elec': elec,
-                                          "sujet": allSujetsDispo[j],
-                                          "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
-                                          "value":data_sujet_mainIllusion,
-                                          "feedback":"mainIllusion"
-                                          }
-    
-            df = df.append(data_sujet_pendule,ignore_index=True)
-            df = df.append(data_sujet_main,ignore_index=True)
-            df = df.append(data_sujet_mainVibrations,ignore_index=True)
+liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",11,15,2.5,26.8,"C3")
+anovaMediane_c3_12_15hz,anovaMean_c3_12_15hz,df_mean_12_15hz,df_mediane_12_15hz = ANOVA_result(moy_bandElec_c3_12_15hz,med_bandElec_c3_12_15hz,False,"")
 
+
+#1 ANOVA POUR 4 BANDES avec C3 ELECTRODES
+#avec effet FB
+liste_tfr_p = load_tfr_data_windows(liste_rawPathEffetFBseul,"pendule",True)
+liste_tfr_m = load_tfr_data_windows(liste_rawPathEffetFBseul,"main",True)
+liste_tfr_mi = load_tfr_data_windows(liste_rawPathEffetFBseul,"mainIllusion",True)
+
+def ANOVA_bandes(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion,tmin,tmax):
+    df = pd.DataFrame(columns=["elec","sujet","bandeFreq","value","feedback"])
+    n_sujets = len(liste_tfrPendule)
+    elecs = ["C3","Cz","C4"]
+    bandesDepart = [8,12,15,20]
+    bandesFin = [12,15,20,30]
+    for elec in elecs:
+        for i in range(len(bandesDepart)):
+            bandeDepart = bandesDepart[i]
+            bandeFin = bandesFin[i]
+            liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+            moy_band,med_band= anova_data_elec(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule,"logratio",bandeDepart,bandeFin,tmin,tmax,elec)
+                  #        tableauANOVAmediane[i][0] = valuePower8_30Hz_pendule_med
+                        #  tableauANOVAmediane[i][1] = valuePower8_30Hz_main_med
+                         # tableauANOVAmediane[i][2] = valuePower8_30Hz_mainIllusion_med
+            for j in range(n_sujets):
+                data_sujet_pendule = med_band[j][0]
+                data_sujet_main = med_band[j][1]
+                data_sujet_mainIllusion = med_band[j][2]
+        
+                data_sujet_pendule = {'elec': elec,
+                                              "sujet": allSujetsDispo[j],
+                                              "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
+                                              "value":data_sujet_pendule,
+                                              "feedback":"pendule"
+                                              }
+                data_sujet_main = {'elec': elec,
+                                              "sujet": allSujetsDispo[j],
+                                              "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
+                                              "value":data_sujet_main,
+                                              "feedback":"main"
+                                              }
+                data_sujet_mainVibrations = {'elec': elec,
+                                              "sujet": allSujetsDispo[j],
+                                              "bandeFreq":str(bandeDepart)+"-"+str(bandeFin),
+                                              "value":data_sujet_mainIllusion,
+                                              "feedback":"mainIllusion"
+                                              }
+        
+                df = df.append(data_sujet_pendule,ignore_index=True)
+                df = df.append(data_sujet_main,ignore_index=True)
+                df = df.append(data_sujet_mainVibrations,ignore_index=True)
+    return df
 df.to_csv("data_elec.csv")
 
 
