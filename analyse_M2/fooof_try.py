@@ -64,7 +64,7 @@ from fooof.bands import Bands
 from fooof.analysis import get_band_peak_fg
 from fooof.plts.spectra import plot_spectrum
 
-num_sujet = 1
+num_sujet = 22
 EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain[num_sujet:num_sujet+1],"",True)
 EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule[num_sujet:num_sujet+1],"",True)
 EpochDataMainIllusion = load_data_postICA_postdropBad_windows(liste_rawPathMainIllusion[num_sujet:num_sujet+1],"",True)
@@ -76,8 +76,10 @@ for epochs in epoch:
     if epochs!=None:
         epochs.set_montage(montageEasyCap)
 from mne.time_frequency import psd_welch
+tmin = 1.5
+tmax = 10
 #dataC3 = EpochDataMain[0].pick_channels(["C3"])
-spectra, freqs = psd_welch(epoch[0].average(), fmin=3, fmax=35, tmin=1.5, tmax=25,
+spectra, freqs = psd_welch(epoch[0].average(), fmin=3, fmax=35, tmin=tmin, tmax=tmax,
                            n_overlap=150, n_fft=300)
 
 print(spectra.shape)
@@ -131,3 +133,24 @@ for ind, (label, band_def) in enumerate(bands):
 
     # Set the plot title
     axes[ind].set_title(label + ' power', {'fontsize' : 20})
+    
+    
+fig, axes = plt.subplots(1, 3, figsize=(15, 6))
+for ind, (label, band_def) in enumerate(bands):
+
+    # Get the power values across channels for the current band
+    band_power = check_nans(get_band_peak_fg(fg, band_def)[:, 1])
+
+    # Extracted and plot the power spectrum model with the most band power
+    fg.get_fooof(np.argmax(band_power)).plot(ax=axes[ind], add_legend=False)
+
+    # Set some plot aesthetics & plot title
+    axes[ind].yaxis.set_ticklabels([])
+    axes[ind].set_title('biggest ' + label + ' peak', {'fontsize' : 16})
+    
+    #plot l'aperiodic
+    
+# Extract aperiodic exponent values
+exps = fg.get_params('aperiodic_params', 'exponent')
+# Plot the topography of aperiodic exponents
+plot_topomap(exps, raw.info, cmap=cm.viridis, contours=0)
