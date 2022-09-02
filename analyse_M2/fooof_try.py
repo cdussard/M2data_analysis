@@ -64,20 +64,20 @@ from fooof.bands import Bands
 from fooof.analysis import get_band_peak_fg
 from fooof.plts.spectra import plot_spectrum
 
-num_sujet = 22
+num_sujet = 0
 EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain[num_sujet:num_sujet+1],"",True)
 EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule[num_sujet:num_sujet+1],"",True)
 EpochDataMainIllusion = load_data_postICA_postdropBad_windows(liste_rawPathMainIllusion[num_sujet:num_sujet+1],"",True)
 
 
-epoch = EpochDataMainIllusion
+epoch = EpochDataMain
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
 for epochs in epoch:
     if epochs!=None:
         epochs.set_montage(montageEasyCap)
 from mne.time_frequency import psd_welch
-tmin = 1.5
-tmax = 10
+tmin = -3
+tmax = -1
 #dataC3 = EpochDataMain[0].pick_channels(["C3"])
 spectra, freqs = psd_welch(epoch[0].average(), fmin=3, fmax=35, tmin=tmin, tmax=tmax,
                            n_overlap=150, n_fft=300)
