@@ -79,14 +79,15 @@ raw_signal.plot(block=True)
 
 anim.save('animation_2.gif', writer='imagemagick', fps=3)#s011 main
 
-
+import mne
+from mne import EvokedArray
 #en utilisant l'average map
 av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")[0]
 av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion-tfr.h5")[0]
 av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
 
 
-def animate_topo(data,doBaseline,tmin,tmax,step,fmin,fmax):
+def animate_topo(data,doBaseline,tmin,tmax,step,fmin,fmax,vmin,vmax):
     if doBaseline:
         data.apply_baseline(baseline=(-3,-1),mode="logratio")
     data_copy = data.copy()
@@ -94,22 +95,23 @@ def animate_topo(data,doBaseline,tmin,tmax,step,fmin,fmax):
     
     data_8_30 = np.mean(data_copy.data,axis=1)
     
-    epo = EvokedArray(data_8_30, data.info)
-    
+    epo = mne.EvokedArray(data_8_30, data.info)
     times = np.arange(tmin,tmax,step)
     fig,anim = epo.animate_topomap(
-        times=times, ch_type='eeg', frame_rate=3, time_unit='s', blit=False,show=False)
+        times=times, ch_type='eeg', frame_rate=3, time_unit='s', blit=False,show=False,vmin=vmin,vmax=vmax)
     raw_signal.plot(block=True)
     return anim
 
-anim = animate_topo(av_power_pendule,False,6,24,1)
+anim = animate_topo(av_power_pendule,False,6,24,1,8,12,None,None)
 anim.save('animation_pendule.gif', writer='imagemagick', fps=3)#s011 main
 
-anim = animate_topo(av_power_mainIllusion,False,6,24,1)
+anim = animate_topo(av_power_main,False,6,24,1,8,30,None,None)
+anim.save('animation_main.gif', writer='imagemagick', fps=3)#s011 main
+
+anim = animate_topo(av_power_mainIllusion,False,6,24,1,8,30,None,None)
 anim.save('animation_mainVibrations.gif', writer='imagemagick', fps=3)#s011 main
 
-anim = animate_topo(av_power_main,False,6,24,1)
-anim.save('animation_main.gif', writer='imagemagick', fps=3)#s011 main
+
 
 #find correct band 
 list_data = [av_power_main,av_power_mainIllusion,av_power_pendule]
