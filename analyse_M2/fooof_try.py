@@ -84,6 +84,45 @@ plot_foof_data(power_mainIllusion.average(),freq_range,tmin,tmax,True)
 
 #==================pour un sujet ============================
     
+def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,tmin,tmax):
+    df_cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
+    fg = plot_foofGroup_data(power_cond_allTrials,freq_range,tmin,tmax,True)
+    for i in range(len(power_cond_allTrials)):
+        fm = fg.get_fooof(ind=i, regenerate=True)
+        params_peak = fm.get_params("peak_params")
+        for ligne in params_peak:
+            data_peak = {
+                "num_sujet":num_sujet,
+                "num_essai":i+1,
+                "FB":name_cond,
+                "freq":round(ligne[0],1),
+                "hauteur":round(ligne[1],2),
+                "largeur":round(ligne[2],2)
+                }
+            df_cond = df_cond.append(data_peak,ignore_index=True)
+    return df_cond
+       
+def return_sujet_data(num_sujet,freq_range,tmin,tmax):
+    #read data
+    print("loading data")
+    power_pendule = load_tfr_data_windows(liste_rawPathPendule[num_sujet:num_sujet+1],"allTrials",True)[0]
+    power_main = load_tfr_data_windows(liste_rawPathMain[num_sujet:num_sujet+1],"allTrials",True)[0]
+    power_mainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion[num_sujet:num_sujet+1],"allTrials",True)[0]
+    #create dataframe
+    df_3cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
+    #fit FOOOF, return peak params
+    df_pendule_sujet = return_sujet_data_cond(0,"pendule",power_pendule,freq_range,tmin,tmax)  
+    df_main_sujet = return_sujet_data_cond(0,"main",power_main,freq_range,tmin,tmax)   
+    df_mainIllusion_sujet = return_sujet_data_cond(0,"mainIllusion",power_mainIllusion,freq_range,tmin,tmax)  
+    df_3cond = pd.concat([df_pendule_sujet, df_main_sujet, df_mainIllusion_sujet], ignore_index=True)
+    return df_3cond
+
+df_full = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
+for i in range(22):
+    df_3cond = return_sujet_data(i,freq_range,5,25)
+    df_full = pd.concat([df_full,df_3cond])
+print(df_full)
+        
 from fooof import FOOOFGroup
 from fooof.utils.download import load_fooof_data
 
