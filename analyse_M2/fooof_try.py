@@ -10,7 +10,7 @@ import mne
 import numpy as np
 from fooof import FOOOF
 from functions.load_savedData import *
-
+import pandas as pd
 
 # Initialize a FOOOF object
 fm = FOOOF()
@@ -18,6 +18,8 @@ fm = FOOOF()
 #load data
 # Import the FOOOF object
 from fooof import FOOOF
+from fooof import FOOOFGroup
+
 
 
 def plot_foof_data(power_object,freq_range,tmin,tmax,keepObject,aperiodic_mode):
@@ -84,7 +86,41 @@ plot_foof_data(power_mainIllusion.average(),freq_range,tmin,tmax,True)
 
 #==================pour un sujet ============================
     
-def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,tmin,tmax):
+sujets_epochs_jetes_main = [
+    [],[],[],[3],[2,4,5,6,7],[7],[],[6],[9,10],[8],[6],
+    [1,6,8],[1,10],[9,10],[6,7,8,9,10],[3,6],[3,6,7],[4,10],[],[1,6],[],[9],[]
+    ]
+
+sujets_epochs_jetes_pendule = [
+    [],[],[],[5],[1,7,10],[],[],[3,5,8,10],[],[5,10],[],
+    [5,6],[4],[6,9],[],[9],[3,8,9],[],[],[1,6],[6],[3,9],[6,8]
+    ]
+
+sujets_epochs_jetes_mainIllusion = [
+    [6],[1,3,6],[1,2],[],[5,6,8,9,10],[],[],[1,6,7,8],[6,7,8,9,10],[4,10],[1],
+    [],[1,8,10],[10],[6,9],[9],[4,8,9],[4,8],[],[1,6],[],[1],[]
+    ]
+
+def return_range_dispo_cond(epochs_jetes_cond):
+    range_dispo = [i for i in range(1,11)]
+    if len(epochs_jetes_cond)>0: 
+        for item in epochs_jetes_cond:
+            range_dispo.remove(item)
+    return range_dispo
+
+dispo_main = []
+for i in range(23):
+    dispo_main.append(return_range_dispo_cond(sujets_epochs_jetes_main[i]))
+    
+dispo_pendule = []
+for i in range(23):
+    dispo_pendule.append(return_range_dispo_cond(sujets_epochs_jetes_pendule[i]))
+
+dispo_mainIllusion = []
+for i in range(23):
+    dispo_mainIllusion.append(return_range_dispo_cond(sujets_epochs_jetes_mainIllusion[i]))
+
+def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,tmin,tmax,essais_dispo):
     df_cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
     fg = plot_foofGroup_data(power_cond_allTrials,freq_range,tmin,tmax,True)
     for i in range(len(power_cond_allTrials)):
@@ -93,12 +129,16 @@ def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,t
         for ligne in params_peak:
             data_peak = {
                 "num_sujet":num_sujet,
-                "num_essai":i+1,
+                "num_essai":essais_dispo[i],#modifie
                 "FB":name_cond,
                 "freq":round(ligne[0],1),
                 "hauteur":round(ligne[1],2),
-                "largeur":round(ligne[2],2)
+                "largeur":round(ligne[2],2),
+                "Rsquared_fit":round(fm.get_params("r_squared"),2),
+                "aperiodic_exp":round(fm.get_params("aperiodic_params")[1],2),
+                "aperiodic_offset":round(fm.get_params("aperiodic_params")[0],2)
                 }
+            print(data_peak)
             df_cond = df_cond.append(data_peak,ignore_index=True)
     return df_cond
        
@@ -111,20 +151,21 @@ def return_sujet_data(num_sujet,freq_range,tmin,tmax):
     #create dataframe
     df_3cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
     #fit FOOOF, return peak params
-    df_pendule_sujet = return_sujet_data_cond(0,"pendule",power_pendule,freq_range,tmin,tmax)  
-    df_main_sujet = return_sujet_data_cond(0,"main",power_main,freq_range,tmin,tmax)   
-    df_mainIllusion_sujet = return_sujet_data_cond(0,"mainIllusion",power_mainIllusion,freq_range,tmin,tmax)  
+    df_pendule_sujet = return_sujet_data_cond(num_sujet,"pendule",power_pendule,freq_range,tmin,tmax,dispo_pendule[num_sujet])  
+    df_main_sujet = return_sujet_data_cond(num_sujet,"main",power_main,freq_range,tmin,tmax,dispo_main[num_sujet])   
+    df_mainIllusion_sujet = return_sujet_data_cond(num_sujet,"mainIllusion",power_mainIllusion,freq_range,tmin,tmax,dispo_mainIllusion[num_sujet])  
     df_3cond = pd.concat([df_pendule_sujet, df_main_sujet, df_mainIllusion_sujet], ignore_index=True)
     return df_3cond
 
 df_full = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
-for i in range(22):
+for i in range(16,23):
     df_3cond = return_sujet_data(i,freq_range,5,25)
     df_full = pd.concat([df_full,df_3cond])
 print(df_full)
+
+df_full.to_csv("../csv_files/FOOOF_analysis_byTrial_essaisFixed.csv")
         
-from fooof import FOOOFGroup
-from fooof.utils.download import load_fooof_data
+
 
 #pendule
 fm_p = plot_foof_data(power_pendule.average(),freq_range,5,25,True,"fixed")
