@@ -11,7 +11,7 @@ import numpy as np
 from fooof import FOOOF
 from functions.load_savedData import *
 import pandas as pd
-
+import os
 # Initialize a FOOOF object
 fm = FOOOF()
 
@@ -49,8 +49,8 @@ def plot_foofGroup_data(power_object,freq_range,tmin,tmax,keepObject):
     power_object.crop(tmin=tmin,tmax=tmax,fmin=min(freq_range),fmax=max(freq_range))
     freqs = power_object.freqs
     if min(freqs)==min(freq_range) and max(freqs)==max(freq_range):
-        spectra = np.mean(power_object.data,axis=3)#mean over time
-        spectra = np.mean(spectra,axis=1)#mean over C3 electrode
+        spectra = np.mean(power_object.data,axis=3)#mean over time avant : 3
+        spectra = np.mean(spectra,axis=1)#mean over C3 electrode avant : 1 
         fg = FOOOFGroup(peak_width_limits=[2, 12], min_peak_height=0.1, max_n_peaks=4)
         fg.fit(freqs, spectra, freq_range)
         fg.report(freqs, spectra, freq_range)
@@ -82,6 +82,43 @@ plot_foof_data(power_pendule.average(),freq_range,5,25,True,"fixed")
 
 plot_foof_data(power_main.average(),freq_range,tmin,tmax,True)
 plot_foof_data(power_mainIllusion.average(),freq_range,tmin,tmax,True)
+
+#MI alone
+def return_sujet_data_MIalone(num_sujet,freq_range,tmin,tmax,suffix,cond):
+    #read data
+    print("loading data")
+    power_MI = load_tfr_data_windows(liste_rawPath_rawMIalone[num_sujet:num_sujet+1],suffix,True)[0]
+    #power_MI.plot(picks="C3")
+    df_cond = pd.DataFrame(columns=["num_sujet","FB","freq","hauteur","largeur"])
+    #fit FOOOF, return peak params
+    fg = plot_foof_data(power_MI,freq_range,tmin,tmax,True,"fixed")
+    params_peak = fg.get_params("peak_params")
+    for ligne in params_peak:
+        data_peak = {
+            "num_sujet":num_sujet,
+            "FB":cond,
+            "freq":round(ligne[0],1),
+            "hauteur":round(ligne[1],2),
+            "largeur":round(ligne[2],2),
+            "Rsquared_fit":round(fg.get_params("r_squared"),2),
+            "aperiodic_exp":round(fg.get_params("aperiodic_params")[1],2),
+            "aperiodic_offset":round(fg.get_params("aperiodic_params")[0],2)
+            }
+        df_cond = df_cond.append(data_peak,ignore_index=True)
+        print(df_cond)
+    return df_cond
+
+df_full = pd.DataFrame(columns=["num_sujet","FB","freq","hauteur","largeur"])
+for i in range(len(liste_rawPath_rawMIalone)):
+    df_MIcond = return_sujet_data_MIalone(i,freq_range,5,26.5,"","MIalone")
+    print(df_MIcond)
+    df_full = pd.concat([df_full,df_MIcond])
+    df_MIcond_BL = return_sujet_data_MIalone(i,freq_range,-5,-2,"","BL_MI")
+    df_full = pd.concat([df_full,df_MIcond_BL])
+
+print(df_full)
+df_full.to_csv("data_MIalone.csv")
+
 #EpochDataMain[0].plot(block=True)
 
 #==================pour un sujet ============================
@@ -120,11 +157,20 @@ dispo_mainIllusion = []
 for i in range(23):
     dispo_mainIllusion.append(return_range_dispo_cond(sujets_epochs_jetes_mainIllusion[i]))
 
-def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,tmin,tmax,essais_dispo):
+real_sujets =[0,2,3,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+
+
+def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,tmin,tmax,essais_dispo,report):
     df_cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
     fg = plot_foofGroup_data(power_cond_allTrials,freq_range,tmin,tmax,True)
     for i in range(len(power_cond_allTrials)):
         fm = fg.get_fooof(ind=i, regenerate=True)
+        if report:
+            directory = "../pdf_files/"+str(num_sujet)+"/"+name_cond+"/"
+            if not os.path.exists(directory): 
+                os.makedirs(directory) 
+            fm.save_report("report"+str(num_sujet)+name_cond+str(i), file_path=directory)
+            #fm.report()
         params_peak = fm.get_params("peak_params")
         for ligne in params_peak:
             data_peak = {
@@ -142,28 +188,30 @@ def return_sujet_data_cond(num_sujet,name_cond,power_cond_allTrials,freq_range,t
             df_cond = df_cond.append(data_peak,ignore_index=True)
     return df_cond
        
-def return_sujet_data(num_sujet,freq_range,tmin,tmax):
+def return_sujet_data(num_sujet,freq_range,tmin,tmax,suffix,report):
     #read data
     print("loading data")
-    power_pendule = load_tfr_data_windows(liste_rawPathPendule[num_sujet:num_sujet+1],"allTrials",True)[0]
-    power_main = load_tfr_data_windows(liste_rawPathMain[num_sujet:num_sujet+1],"allTrials",True)[0]
-    power_mainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion[num_sujet:num_sujet+1],"allTrials",True)[0]
+    power_pendule = load_tfr_data_windows(liste_rawPathPendule[num_sujet:num_sujet+1],suffix,True)[0]
+    power_main = load_tfr_data_windows(liste_rawPathMain[num_sujet:num_sujet+1],suffix,True)[0]
+    power_mainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion[num_sujet:num_sujet+1],suffix,True)[0]
     #create dataframe
     df_3cond = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
     #fit FOOOF, return peak params
-    df_pendule_sujet = return_sujet_data_cond(num_sujet,"pendule",power_pendule,freq_range,tmin,tmax,dispo_pendule[num_sujet])  
-    df_main_sujet = return_sujet_data_cond(num_sujet,"main",power_main,freq_range,tmin,tmax,dispo_main[num_sujet])   
-    df_mainIllusion_sujet = return_sujet_data_cond(num_sujet,"mainIllusion",power_mainIllusion,freq_range,tmin,tmax,dispo_mainIllusion[num_sujet])  
+    real_num_sujet = real_sujets[num_sujet]
+    df_pendule_sujet = return_sujet_data_cond(real_num_sujet,"pendule",power_pendule,freq_range,tmin,tmax,dispo_pendule[num_sujet],report)  
+    df_main_sujet = return_sujet_data_cond(real_num_sujet,"main",power_main,freq_range,tmin,tmax,dispo_main[num_sujet],report)    
+    df_mainIllusion_sujet = return_sujet_data_cond(real_num_sujet,"mainIllusion",power_mainIllusion,freq_range,tmin,tmax,dispo_mainIllusion[num_sujet],report)   
     df_3cond = pd.concat([df_pendule_sujet, df_main_sujet, df_mainIllusion_sujet], ignore_index=True)
     return df_3cond
 
+
+
 df_full = pd.DataFrame(columns=["num_sujet","num_essai","FB","freq","hauteur","largeur"])
-for i in range(16,23):
-    df_3cond = return_sujet_data(i,freq_range,5,25)
+for i in range(23):
+    df_3cond = return_sujet_data(i,freq_range,-3,-1,"allTrials",True)
     df_full = pd.concat([df_full,df_3cond])
 print(df_full)
-
-df_full.to_csv("../csv_files/FOOOF_analysis_byTrial_essaisFixed.csv")
+#df_full.to_csv("../csv_files/FOOOF_analysis_byTrial_baseline_essaisFixed.csv")
         
 
 

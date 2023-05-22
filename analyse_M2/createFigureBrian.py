@@ -102,14 +102,15 @@ def animate_topo(data,doBaseline,tmin,tmax,step,fmin,fmax,vmin,vmax):
     raw_signal.plot(block=True)
     return anim
 
-anim = animate_topo(av_power_pendule,False,6,24,1,8,30,-250000,250000)
+anim = animate_topo(av_power_pendule,False,2,24,1,8,30,-250000,250000)
+anim.save('animation_pendule_slowFull.gif', writer='imagemagick', fps=1)#s011 main
 anim.save('animation_pendule.gif', writer='imagemagick', fps=3)#s011 main
 
-anim = animate_topo(av_power_main,False,6,24,1,8,30,-250000,250000)
-anim.save('animation_main.gif', writer='imagemagick', fps=3)#s011 main
+anim = animate_topo(av_power_main,False,1,24,1,8,30,-250000,250000)
+anim.save('animation_main_slowFull.gif', writer='imagemagick', fps=1)#s011 main
 
-anim = animate_topo(av_power_mainIllusion,False,6,24,1,8,30,-250000,250000)
-anim.save('animation_mainVibrations.gif', writer='imagemagick', fps=3)#s011 main
+anim = animate_topo(av_power_mainIllusion,False,1,24,1,8,30,-250000,250000)
+anim.save('animation_mainVibrations_slowFull.gif', writer='imagemagick', fps=1)#s011 main
 
 
 

@@ -63,7 +63,7 @@ def compute_condition_power(i,liste_raw,essaisJetes,freqs,n_cycles):
     # gc.collect()
     return power_sujet
 
-def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap):
+def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap,fig):
     print("je suis plot_condition_power")
     delta = 0  
     print("essais jetes plot")
@@ -71,6 +71,8 @@ def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,fr
     for i in range(10):
         if i+1 not in essaisJetes:#gerer les epochs jetes dans l'affichage
             power_sujet[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[num_ax,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
+            #power_sujet[i-delta].average().plot(picks=["C3"],baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,axes=axs[num_ax,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
+            #plot_elec_cond(power_sujet[i-delta],"C3","who",11,np.arange(3, 85, 1),fig,axs[num_ax,i],None,None,1.5,26.5,3,40,"blue",None)
         else:
             print("essai jete num"+str(i+1))
             delta += 1
@@ -83,8 +85,8 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_suje
     i = num_sujet
     my_cmap = discrete_cmap(13, 'RdBu_r')
     fig,axs = plt.subplots(3,10)
-    vmin = -0.75
-    vmax = 0.75
+    vmin = -1.5#-0.75
+    vmax = 1.5#0.75
     tmin = 2
     tmax = 25
     dureePreBaseline = 3 #3
@@ -97,15 +99,15 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_suje
     n_cycles = freqs 
     #pendule
     power_sujet_pendule = compute_condition_power(i,liste_rawPathPendule,essaisJetes_pendule_sujet,freqs,n_cycles)
-    plot_condition_power(power_sujet_pendule,0,essaisJetes_pendule_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
+    plot_condition_power(power_sujet_pendule,0,essaisJetes_pendule_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap,fig)
     
     #main
     power_sujet_main = compute_condition_power(i,liste_rawPathMain,essaisJetes_main_sujet,freqs,n_cycles)
-    plot_condition_power(power_sujet_main,1,essaisJetes_main_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
+    plot_condition_power(power_sujet_main,1,essaisJetes_main_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap,fig)
 
     #mainIllusion
     power_sujet_mainIllusion = compute_condition_power(i,liste_rawPathMainIllusion,essaisJetes_mainIllusion_sujet,freqs,n_cycles)
-    plot_condition_power(power_sujet_mainIllusion,2,essaisJetes_mainIllusion_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
+    plot_condition_power(power_sujet_mainIllusion,2,essaisJetes_mainIllusion_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap,fig)
     if num_sujet>2:
         num_sujet_reel = num_sujet + 2
     elif num_sujet == 0   :
@@ -121,8 +123,10 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_suje
 #                      sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule)
 # raw_signal.plot(block=True)
 
+
+
 figs_stock = []
-for i in range(10):#5 par 5 pour ne pas saturer la RAM
+for i in range(1):#5 par 5 pour ne pas saturer la RAM
     print(i)
     suj_jetes_main = jetes_main[i]
     suj_jetes_mainIllusion = jetes_mainIllusion[i]
@@ -134,6 +138,96 @@ for i in range(10):#5 par 5 pour ne pas saturer la RAM
     print("jete pendule")
     print(suj_jetes_pendule)
     figs_stock.append(get_30essais_sujet_i(num_sujet=i,freqMin=8,freqMax=30,pasFreq=1,
+                     essaisJetes_main_sujet=suj_jetes_main,essaisJetes_mainIllusion_sujet=suj_jetes_mainIllusion,essaisJetes_pendule_sujet=suj_jetes_pendule))
+num_sujet = 19
+sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
+sample_data_dir = pathlib.Path(sample_data_loc)
+date_nom_fichier = dates[num_sujet][-4:]+"-"+dates[num_sujet][3:5]+"-"+dates[num_sujet][0:2]
+raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + "_7-2-b.vhdr")
+
+raw_signal = mne.io.read_raw_brainvision(raw_path_sample,preload=False,eog=('HEOG', 'VEOG'))
+
+raw_signal.plot(block=True)
+
+
+
+def get_30essais_sujet_i_powerSpectrum(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_sujet,essaisJetes_mainIllusion_sujet,essaisJetes_pendule_sujet):
+    freqs = np.arange(freqMin, freqMax, pasFreq)
+    print(freqs)
+    n_cycles = freqs 
+    i = num_sujet
+    my_cmap = discrete_cmap(13, 'RdBu_r')
+    fig,axs = plt.subplots(3,10)
+    #pendule
+    power_sujet_pendule = compute_condition_power(i,liste_rawPathPendule,essaisJetes_pendule_sujet,freqs,n_cycles)
+    plot_elec_cond_generalise(power_sujet_pendule,essaisJetes_pendule_sujet,"C3","pendule",11,freqs,fig,axs,0,0,0.5e-10,1.5,26.8,3,40,"green",True)
+    # #main
+    power_sujet_main = compute_condition_power(i,liste_rawPathMain,essaisJetes_main_sujet,freqs,n_cycles)
+    plot_elec_cond_generalise(power_sujet_main,essaisJetes_main_sujet,"C3","main",11,freqs,fig,axs,1,0,0.5e-10,1.5,26.8,3,40,"blue",True)
+   
+    # #mainIllusion
+    power_sujet_mainIllusion = compute_condition_power(i,liste_rawPathMainIllusion,essaisJetes_mainIllusion_sujet,freqs,n_cycles)
+    plot_elec_cond_generalise(power_sujet_mainIllusion,essaisJetes_mainIllusion_sujet,"C3","mainIllusion",11,freqs,fig,axs,2,0,0.5e-10,1.5,26.8,3,40,"red",True)
+    
+    if num_sujet>2:
+        num_sujet_reel = num_sujet + 2
+    elif num_sujet == 0:
+        num_sujet_reel = 0
+    elif num_sujet <3:
+        num_sujet_reel = num_sujet + 1
+
+    fig.suptitle('Sujet n°'+str(num_sujet_reel), fontsize=16)
+    return fig
+
+def plot_elec_cond_generalise(power_sujet,essaisJetes,elec_name,cond,elec_position,freqs,fig,ax,ax_nb,scaleMin,scaleMax,tmin,tmax,fmin,fmax,color,label):
+    delta = 0  
+    print("essais jetes plot")
+    print(essaisJetes)
+    for i in range(10):
+        if i+1 not in essaisJetes:#gerer les epochs jetes dans l'affichage
+            av_power = power_sujet[i-delta]
+            ch_names = av_power.info.ch_names
+            if ch_names[elec_position]!=elec_name:
+                print(av_power.info.ch_names[elec_position]+"IS NOT "+elec_name)
+                elec_position = ch_names.index(elec_name)
+            av_power_copy = av_power.copy()
+            av_power_copy.crop(tmin=tmin,tmax=tmax)
+            data = av_power_copy.data
+            data_meanTps = np.mean(data,axis=0)
+            data_meanTps = np.mean(data_meanTps,axis=2)
+            data_elec = data_meanTps[elec_position][:]
+            if label:
+                if color is not None:
+                    ax[ax_nb,i].plot(freqs,data_elec, label=elec_name+" "+cond,color=color)
+                else:
+                    ax[ax_nb,i].plot(freqs,data_elec, label=elec_name+" "+cond)
+                    
+            else:
+                ax[ax_nb,i].plot(freqs,data_elec,color=color) 
+            plt.legend(loc="upper left")
+            ax[ax_nb,i].axvline(x=8,color="black",linestyle="--")
+            ax[ax_nb,i].axvline(x=30,color="black",linestyle="--")
+            ax[ax_nb,i].set_xlim([fmin, fmax])
+            ax[ax_nb,i].set_ylim([scaleMin, scaleMax])
+            #plt.ylim([scaleMin, scaleMax])
+            #plt.xlim([fmin, fmax])
+        else:
+          print("essai jete num"+str(i+1))
+          delta += 1
+
+figs_stock = []
+for i in range(15,20):#5 par 5 pour ne pas saturer la RAM
+    print(i)
+    suj_jetes_main = jetes_main[i]
+    suj_jetes_mainIllusion = jetes_mainIllusion[i]
+    suj_jetes_pendule = jetes_pendule[i]
+    print("jete main")
+    print(suj_jetes_main)
+    print("jete mainIllusion")
+    print(suj_jetes_mainIllusion)
+    print("jete pendule")
+    print(suj_jetes_pendule)
+    figs_stock.append(get_30essais_sujet_i_powerSpectrum(num_sujet=i,freqMin=3,freqMax=40,pasFreq=1,
                      essaisJetes_main_sujet=suj_jetes_main,essaisJetes_mainIllusion_sujet=suj_jetes_mainIllusion,essaisJetes_pendule_sujet=suj_jetes_pendule))
 num_sujet = 19
 sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"

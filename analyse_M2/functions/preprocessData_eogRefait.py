@@ -5,7 +5,6 @@ Created on Mon Oct  4 14:20:54 2021
 
 @author: claire.dussard
 """
-
 import time
 import matplotlib
 import pathlib
@@ -16,6 +15,7 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from mne.preprocessing import ICA
+from functions.load_savedData import *
 
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
 def read_raw_data(listePath):
@@ -34,14 +34,17 @@ def filter_data(listeRaw,low_freq,high_freq,notch_freqs):
         recording_eeg = recording.copy().drop_channels(['ECG' ,'ACC_X','ACC_Z','ACC_Y'])#,'HEOG','VEOG'])'EMG'
         low_pass_eeg = recording_eeg.copy().filter(low_freq,None, method='iir', iir_params=dict(ftype='butter', order=4))
         high_pass_eeg = low_pass_eeg.copy().filter(None,high_freq, method='iir', iir_params=dict(ftype='butter', order=4))
-        filtered = high_pass_eeg.notch_filter(freqs=notch_freqs, filter_length='auto',phase='zero')
+        if len(notch_freqs)>0:
+            filtered = high_pass_eeg.notch_filter(freqs=notch_freqs, filter_length='auto',phase='zero')
+        else:
+            filtered = high_pass_eeg
         filtered.set_channel_types({'EMG': 'emg'}) 
         listeFiltered.append(filtered)
 
     return listeFiltered
 
 def montage_eeg(listeFilteredEEG):
-    montageEasyCap = mne.channels.make_standard_montage('easycap-M1')#est ce que c'est le bon ?
+    montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
     listeMontaged = []
     for recording in listeFilteredEEG:
         montaged=recording.set_montage(montageEasyCap)
@@ -89,7 +92,7 @@ def ICA_preproc(liste_epochsICA,liste_epochsSignal,listeRawPath):
             listeSujetsRestants.remove(listeSujetsRestants[i])#pb les epochs droppes reviennent a l'ICA (pas ceux rejetes par artefact par contre)
     return liste_PostICA_epoch,liste_ICA,listeSujetsRestants
         
-def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEpoch,reject):
+def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEpoch):
     epochsCibles = []
     liste_epochsSignal = []
     liste_epochsPreICA = []
@@ -100,8 +103,8 @@ def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEp
          epochsCibles = mne.Epochs(signal,events,event_id,tmin=-dureePreEpoch,tmax = dureeEpoch,baseline=None, preload=True)#,reject=reject)#pas de picks avant ICA           
          epochsICA = mne.Epochs(signalICA,events,event_id,tmin=-dureePreEpoch,tmax = dureeEpoch,baseline=None, preload=True)#,reject=reject)
          #mark bad epochs for ICA 
-         if len(epochsICA)>0:
-             epochsICA.plot(block=True)#mark bad
+         # if len(epochsICA)>0:
+         #     epochsICA.plot(block=True)#mark bad
          epochsICA.info["bads"] = epochsCibles.info["bads"]
          #instead of rejecting epoch, mark bad and drop if len(bad channels >6 ?) Fp1 & Fp2 merdent tjrs
          #epochsCibles.plot_drop_log()
@@ -144,7 +147,7 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
     dureePreEpoch = 5.0
     reject = dict(eeg=50e-5 # unit: V (EEG channels) & 100 on drop rien, a 10 on drop tout ?
               )
-    liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch,reject)
+    liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch)
     #ICA
     #liste_PostICA_epoch,liste_ICA,listeSujetsRestants = ICA_preproc(liste_epochsPreICA,liste_epochsSignal,listeRawPath)
     #ICA_preproc(listeEpochsPreICA_badElectrodes,listeEpochs_badElectrodes)
@@ -156,6 +159,27 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
     #change order electrodes
     #listeEpochs_bonOrdreChannels = change_order_channels(channels,listeAverageRef)
 
+    return liste_epochsPreICA,liste_epochsSignal
+
+
+def pre_process_donnees_batch(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_freqs,initial_ref,liste_event_id,epochDuration):
+    liste_epochsPreICA = []
+    liste_epochsSignal = []
+    channels = ['VEOG','HEOG','Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'FT9', 'FC5', 'FC1', 'FC2', 'FC6', 'FT10', 'T7', 'C3', 'Cz', 'C4', 'T8', 'TP9','CP5','CP1','CP2','CP6','TP10', 'P7', 'P3', 'Pz', 'P4', 'P8', 'O1', 'Oz', 'O2']
+    listeRaw = read_raw_data(listeRawPath)
+    #filtre a 1Hz le signal pour ICA mais a 0.1 Hz le signal a analyser
+    listeFilteredSignal = filter_data(listeRaw,lowFreqSignal,high_freq,notch_freqs)
+    listeFilteredICA = filter_data(listeRaw,low_freqICA,high_freq,notch_freqs)
+    #mark bad
+    listeFilteredSignal_bad = mark_bad_electrodes(listeFilteredSignal,['TP9','TP10','FT9','FT10'])
+    listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,['TP9','TP10','FT9','FT10'])
+    #epoching
+    dureeEpoch = epochDuration#29.3#entre 28.6 et 31.1 24s en vrai
+    dureePreEpoch = 5.0
+    for event_id in liste_event_id:
+        liste_epochsPreICA_temp,liste_epochsSignal_temp = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch)
+        liste_epochsPreICA.append(liste_epochsPreICA_temp)
+        liste_epochsSignal.append(liste_epochsSignal_temp)
     return liste_epochsPreICA,liste_epochsSignal
 
 
@@ -207,6 +231,7 @@ def treat_indiv_data(epochsSujet,epochsPreICASujet,initial_ref):
         #average ref
         signalInitialRef = mne.add_reference_channels(epochsSujet,initial_ref)
         averageRefSignal = signalInitialRef.set_eeg_reference('average')
+        averageRefSignal.plot(block=True)
         #append??
     else:
         averageRefSignal = None

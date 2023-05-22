@@ -5,7 +5,8 @@ Created on Tue Jan 11 14:57:32 2022
 
 @author: claire.dussard
 """
-
+import mne
+import numpy as np
 #load previous data
 EpochDataMain = load_data_postICA_postdropBad(rawPath_main_sujets,"")
 

@@ -13,8 +13,10 @@ from functions.load_savedData import *
 from handleData_subject import createSujetsData
 from functions.load_savedData import *
 from frequencyPower_displays import *
+from statsmodels.stats.anova import AnovaRM
+  
 
-essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates = createSujetsData()
+essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
 seuils_sujets = pd.read_csv("./data/seuil_data/seuils_sujets_dash.csv")
 
@@ -151,6 +153,24 @@ def get_t_testValue_cell(ligne,colonne):
 
     return resultatMainPendule,resultatMainMainIllusion
 
+def get_F_value_cell(ligne,colonne):
+    print("ligne : "+str(ligne))
+    print("colonne : "+str(colonne))
+    ligne = ligne
+    colonne = colonne
+    df_cell = pd.DataFrame(columns=["num_sujet","FB","value"])
+    for i in range(23):
+        data = pd.DataFrame([{'num_sujet': i,"FB":"main","value":listeSujetsMain[i].iloc[ligne,colonne]}])
+        df_cell = pd.concat([df_cell,data], ignore_index=True)
+        data =pd.DataFrame([{'num_sujet': i,"FB":"pendule","value":listeSujetsPendule[i].iloc[ligne,colonne]}])
+        df_cell = pd.concat([df_cell,data], ignore_index=True)
+        data =pd.DataFrame([{'num_sujet': i,"FB":"mainIllusion","value":listeSujetsMainIllusion[i].iloc[ligne,colonne]}])
+        df_cell = pd.concat([df_cell,data], ignore_index=True)
+    print(df_cell)
+    resultatANOVA = AnovaRM(data=df_cell, depvar='value',
+                  subject='num_sujet', within=['FB']).fit()
+    return resultatANOVA
+
 
 #pour toutes les valeurs
 nbFreq = listeSujetsMain[0].shape[0] #lire le nb de points de frequence
@@ -167,7 +187,15 @@ for timePoint in range(nbPointsTemps):#colonne
 pd.DataFrame(tableauValeurs_mainPendule).to_csv("../excel_files/avec_BL/t_test_23sujets_tpsFreq_mainPendule.csv",header=None, index=None)
 pd.DataFrame(tableauValeurs_mainMainIllusion).to_csv("../excel_files/avec_BL/t_test_23sujets_tpsFreq_mainMainI.csv",header=None, index=None)
 
+#same with ANOVA
+nbFreq = listeSujetsMain[0].shape[0] #lire le nb de points de frequence
+nbPointsTemps = listeSujetsMain[0].shape[1]#lire le nb de points de temps
+tableauValeurs_anova = np.zeros(shape=(nbFreq,nbPointsTemps))
 
+for timePoint in range(nbPointsTemps):#colonne
+    for freqPoint in range(nbFreq):#ligne
+        res_anova = get_F_value_cell(freqPoint,timePoint)
+        tableauValeurs_anova[freqPoint,timePoint] = res_anova.anova_table["F Value"][0]#F value
 
 #======================================================================================
 
@@ -192,7 +220,7 @@ for tfr_mainI,tfr_main,tfr_pendule in zip(liste_tfr_mainIllusion,liste_tfr_main,
     tfr_mainI.crop(tmin = 1.5,tmax=25.5,fmin = 8,fmax = 30)
     tfr_main.crop(tmin = 1.5,tmax=25.5,fmin = 8,fmax = 30)
     tfr_pendule.crop(tmin = 1.5,tmax=25.5,fmin = 8,fmax = 30)
-
+    
 
 #create t test table , with electrodes and frequency
 tableauMain = np.zeros(shape=(28,23,23))#electrodes x freqs x sujets
@@ -219,24 +247,92 @@ np.save('../numpy_files/allElec_mov_mainIllusion_timePooled_8-30_23sujets.npy', 
 tableauPendule = np.load('../numpy_files/allElec_mov_pendule_timePooled_8-30_23sujets.npy')
 tableauMain = np.load('../numpy_files/allElec_mov_main_timePooled_8-30_23sujets.npy')
 tableauMainIllusion = np.load('../numpy_files/allElec_mov_mainIllusion_timePooled_8-30_23sujets.npy')
-
-#save as excel
-writer = pd.ExcelWriter('../excel_files/allElec_mov_pendule_timePooled_8-30_23sujets.xlsx', engine='xlsxwriter')
+#=================
+#checker valeurs de lydia
+import scipy.io
+tableauMain = np.zeros(shape=(28,82,23))#electrodes x freqs x sujets
+tableauMainIllusion = np.zeros(shape=(28,82,23))#electrodes x freqs x sujets
+tableauPendule = np.zeros(shape=(28,82,23))#electrodes x freqs x sujets
+i = 0
+for sujet in allSujetsDispo:
+    num_suj = listeNumSujetsFinale[sujet]
+    p = scipy.io.loadmat('../MATLAB_DATA/'+num_suj+'/'+num_suj+'-penduletimePooled.mat')
+    tableauPendule[:,:,i] = p["data"]
+    m = scipy.io.loadmat('../MATLAB_DATA/'+num_suj+'/'+num_suj+'-maintimePooled.mat')
+    tableauMain[:,:,i] = m["data"]
+    mi = scipy.io.loadmat('../MATLAB_DATA/'+num_suj+'/'+num_suj+'-mainIllusiontimePooled.mat')
+    tableauMainIllusion[:,:,i] = mi["data"]
+    print(p["data"].shape)
+    i += 1 
+ #save as excel lydia
+writer = pd.ExcelWriter('../excel_files/allElec_mov_pendule_timePooled_3-84_23sujets.xlsx', engine='xlsxwriter')
 for i in range(23):
     df = pd.DataFrame(tableauPendule[:,:,i])
     df.to_excel(writer,index=False,header=False, sheet_name='bin%d' % i)
 writer.save()
-writer = pd.ExcelWriter('../excel_files/allElec_mov_main_timePooled_8-30_23sujets.xlsx', engine='xlsxwriter')
+writer = pd.ExcelWriter('../excel_files/allElec_mov_main_timePooled_3-84_23sujets.xlsx', engine='xlsxwriter')
 for i in range(23):
     df = pd.DataFrame(tableauMain[:,:,i])
     df.to_excel(writer,index=False,header=False, sheet_name='bin%d' % i)
 writer.save()
-writer = pd.ExcelWriter('../excel_files/allElec_mov_mainIllusion_timePooled_8-30_23sujets.xlsx', engine='xlsxwriter')
+writer = pd.ExcelWriter('../excel_files/allElec_mov_mainIllusion_timePooled_3-84_23sujets.xlsx', engine='xlsxwriter')
 for i in range(23):
     df = pd.DataFrame(tableauMainIllusion[:,:,i])
     df.to_excel(writer,index=False,header=False, sheet_name='bin%d' % i)
-writer.save()
+writer.save()   
+    
 
+tableauMain = pd.ExcelFile('../excel_files/allElec_mov_main_timePooled_3-84_23sujets.xlsx')
+tableauPendule = pd.ExcelFile('../excel_files/allElec_mov_pendule_timePooled_3-84_23sujets.xlsx')
+tableauMainIllusion = pd.ExcelFile('../excel_files/allElec_mov_mainIllusion_timePooled_3-84_23sujets.xlsx')
+
+listeSujetsMain = []
+listeSujetsPendule = []
+listeSujetsMainIllusion = []
+
+for i in range(23):
+    df_Sujet_i_Main = pd.read_excel(tableauMain, "bin"+str(i),header=None)#,index=False)
+    listeSujetsMain.append(df_Sujet_i_Main)
+    
+    df_Sujet_i_Pendule = pd.read_excel(tableauPendule, "bin"+str(i),header=None)
+    listeSujetsPendule.append(df_Sujet_i_Pendule)
+    
+    df_Sujet_i_MainIllusion = pd.read_excel(tableauMainIllusion, "bin"+str(i),header=None)
+    listeSujetsMainIllusion.append(df_Sujet_i_MainIllusion)
+
+#pour toutes les valeurs
+nbElec = listeSujetsMain[0].shape[0] #lire le nb d'electrodes'
+nbFreq = listeSujetsMain[0].shape[1]#lire le nb de frequences
+tableauValeurs_mainPendule = np.zeros(shape=(nbElec,nbFreq))
+tableauValeurs_mainMainIllusion = np.zeros(shape=(nbElec,nbFreq))
+for freqPoint in range(nbFreq):#colonne
+    for elec in range(nbElec):#ligne
+        print(elec)
+        res_mainPendule,res_mainMainI = get_t_testValue_cell(elec,freqPoint)
+        tableauValeurs_mainPendule[elec,freqPoint] = res_mainPendule[1]#p value
+        tableauValeurs_mainMainIllusion[elec,freqPoint] = res_mainMainI[1]#p value
+        
+        
+#version ANOVA RM
+#pour toutes les valeurs
+nbElec = listeSujetsMain[0].shape[0] #lire le nb d'electrodes
+nbFreq = listeSujetsMain[0].shape[1]#lire le nb de frequences
+tableauValeurs_anova = np.zeros(shape=(nbElec,nbFreq))
+tableaupvalue_Valeurs_anova = np.zeros(shape=(nbElec,nbFreq))
+
+for freqPoint in range(nbFreq):#colonne
+    for elec in range(nbElec):#ligne
+        print(elec)
+        res_anova = get_F_value_cell(elec,freqPoint)
+        tableauValeurs_anova[elec,freqPoint] = res_anova.anova_table["F Value"][0]#F value
+        tableaupvalue_Valeurs_anova[elec,freqPoint] = res_anova.anova_table["Pr > F"][0]#F value
+        
+pd.DataFrame(tableauValeurs_anova).to_csv("../excel_files/t_test_23sujets_elecFreq_ANOVA_3_84.csv",header=None, index=None)    
+pd.DataFrame(tableaupvalue_Valeurs_anova).to_csv("../excel_files/t_test_23sujets_elecFreq_ANOVApvalue_3_84.csv",header=None, index=None)    
+
+pd.DataFrame(tableauValeurs_mainPendule).to_csv("../excel_files/t_test_23sujets_elecFreq_mainPendule_3_84.csv",header=None, index=None)
+pd.DataFrame(tableauValeurs_mainMainIllusion).to_csv("../excel_files/t_test_23sujets_elecFreq_mainMainI_3_84.csv",header=None, index=None)
+#============ fin test lydia===========
 
 #=============get the data in the right format =========================
 tableauMain = pd.ExcelFile('../excel_files/avec_BL/All_elecs/allElec_mov_main_timePooled_8-30_23sujets.xlsx')

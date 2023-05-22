@@ -14,6 +14,7 @@ import numpy as np
 # importer les fonctions definies par moi 
 from handleData_subject import createSujetsData
 from functions.load_savedData import *
+from functions.preprocessData_eogRefait import *
 
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
 
@@ -39,7 +40,7 @@ event_id_main={'Essai_main':3}
 #=================================================================================================================================
                                                         #METHODE AVERAGE EPOCHS SUJETS
 #=================================================================================================================================
-from functions.preprocessData_eogRefait import *
+
 
 nbSujets = 24
 SujetsDejaTraites = 0
@@ -75,31 +76,6 @@ liste_epochs_averageRef_main = []
 liste_epochs_averageRef_mainIllusion = []
 liste_epochs_averageRef_pendule = []
 channelsSansFz = ['Fp1', 'Fp2', 'F7', 'F3','F4', 'F8', 'FT9', 'FC5', 'FC1', 'FC2', 'FC6', 'FT10','T7', 'C3', 'Cz', 'C4', 'T8', 'TP9', 'CP5','CP1','CP2','CP6','TP10','P7', 'P3', 'Pz', 'P4', 'P8', 'O1', 'Oz', 'O2','HEOG','VEOG']
-
-for num_sujet in [4]:#range(len(epochDataMain_dropBad)):
-    #============== PLOT & DROP EPOCHS========================================
-    epochDataMain_dropBad[num_sujet].reorder_channels(channelsSansFz) #nathalie : mieux de jeter epochs avant average ref (sinon ça va baver partout artefact)
-    epochDataMain_dropBad[num_sujet].plot(n_channels=35,n_epochs=1) #select which epochs, which channels to drop
-    # EpochDataPendule_dropBad[num_sujet].reorder_channels(channelsSansFz)
-    # EpochDataPendule_dropBad[num_sujet].plot(n_channels=35,n_epochs=1)
-    # EpochDataMainIllusion_dropBad[num_sujet].reorder_channels(channelsSansFz)
-    # EpochDataMainIllusion_dropBad[num_sujet].plot(block=True,n_channels=35,n_epochs=1)
-    #====================MAIN===============================================================
-    epochDataMain_dropBad[num_sujet].info["bads"]=["FT9","FT10","TP9","TP10"]
-    signalInitialRef_main = mne.add_reference_channels(epochDataMain_dropBad[num_sujet],initial_ref)
-    averageRefSignal_main = signalInitialRef_main.set_eeg_reference('average')
-    liste_epochs_averageRef_main.append(averageRefSignal_main)
-    # #====================PENDULE===============================================================
-    # EpochDataPendule_dropBad[num_sujet].info["bads"]=["FT9","FT10","TP9","TP10"]
-    # signalInitialRef_pendule = mne.add_reference_channels(EpochDataPendule_dropBad[num_sujet],initial_ref)
-    # averageRefSignal_pendule = signalInitialRef_pendule.set_eeg_reference('average')
-    # liste_epochs_averageRef_pendule.append(averageRefSignal_pendule)
-    # #====================MAIN ILLUSION==============================================================
-    # EpochDataMainIllusion_dropBad[num_sujet].info["bads"]=["FT9","FT10","TP9","TP10"]
-    # signalInitialRef_mainIllusion = mne.add_reference_channels(EpochDataMainIllusion_dropBad[num_sujet],initial_ref)
-    # averageRefSignal_mainIllusion = signalInitialRef_mainIllusion.set_eeg_reference('average')
-    # liste_epochs_averageRef_mainIllusion.append(averageRefSignal_mainIllusion)
-
 raw_signal.plot(block=True)
     
 
@@ -131,11 +107,11 @@ saveEpochsAfterICA(listeEpochs_mainIllusion,rawPath_mainIllusion_sujets)
 save_ICA_files(listeICA_mainIllusion,rawPath_mainIllusion_sujets)
 
 #load previous data
-EpochDataMain = load_data_postICA_postdropBad(rawPath_main_sujets,"")
+EpochDataMain = load_data_postICA_postdropBad_windows(rawPath_main_sujets[0:1],"",True)
 
-EpochDataPendule = load_data_postICA_postdropBad(rawPath_pendule_sujets,"")
+EpochDataPendule = load_data_postICA_postdropBad_windows(rawPath_pendule_sujets,"",True)
 
-EpochDataMainIllusion = load_data_postICA_postdropBad(rawPath_mainIllusion_sujets,"")
+EpochDataMainIllusion = load_data_postICA_postdropBad_windows(rawPath_mainIllusion_sujets,"",True)
 
 #===================set montage===IMPORTANT!!!!=======================
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
@@ -227,7 +203,7 @@ save_tfr_data(liste_power_mainIllusion,rawPath_mainIllusion_sujets,"")
 #avoir pop(5) et pop(4) avant car sujets 6 & 7 epochs manquants ds conditions, en fait non pck le code marche 8-) "sujet x non traité"
 liste_tfr = []
 liste_tfr = liste_power_pendule#load_tfr_data(rawPath_main_sujets)
-liste_tfr = load_tfr_data(rawPath_main_sujets,"")
+liste_tfr = load_tfr_data_windows(rawPath_mainIllusion_sujets,"",True)
 #load_tfr_data(rawPath_main_sujets)
 #load_tfr_data(rawPath_pendule_sujets)
 
@@ -286,40 +262,25 @@ mode = "logratio"
 #=================== save the data images ==================================================
 mode = "logratio"
 save_topo_data(av_power_main,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main",False,1.5,25.5,23)#can be improved with boolean Params for alpha etc
-save_topo_data(av_power_main2cond,dureePreBaseline,valeurPostBaseline,"all_sujets2cond",mode,"main",False)
-save_topo_data(av_power_main3cond,dureePreBaseline,valeurPostBaseline,"all_sujets3cond",mode,"main",False)
 
 save_topo_data(avpower_main3cond_Moins_2cond,dureePreBaseline,valeurPostBaseline,"3-2all_sujets3-2cond",mode,"main",False)
 
 #try with baseline computed before vs after
-save_topo_data(av_power_main_noBL,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"main",True)
 
-save_topo_data(av_power_pendule,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"pendule",False,1.5,25.5,23)#can be improved with boolean Params for alpha etc
-save_topo_data(av_power_pendule_2cond,dureePreBaseline,valeurPostBaseline,"all_sujets2cond",mode,"pendule",False)#can be improved with boolean Params for alpha etc
-save_topo_data(av_power_pendule_3cond,dureePreBaseline,valeurPostBaseline,"all_sujets3cond",mode,"pendule",False)
-
-save_topo_data(avpower_pendule3cond_Moins_2cond,dureePreBaseline,valeurPostBaseline,"3-2all_sujets3-2cond",mode,"pendule",False)
-
-save_topo_data(av_power_mainIllusion,dureePreBaseline,valeurPostBaseline,"all_sujets",mode,"mainIllusion",False,1.5,25.5,23)
-save_topo_data(av_power_mainIllusion3cond,dureePreBaseline,valeurPostBaseline,"all_sujets3cond",mode,"mainIllusion",False)
-save_topo_data(av_power_mainIllusion2cond,dureePreBaseline,valeurPostBaseline,"all_sujets2cond",mode,"mainIllusion",False)
-
-save_topo_data(avpower_mainI_3cond_Moins_2cond,dureePreBaseline,valeurPostBaseline,"3-2all_sujets3-2cond",mode,"mainIllusion",False)
-
-# liste_tfr.append(av_tfr1)
-# liste_tfr.append(av_tfr2)
 gdAverage = mne.grand_average(EpochDataMain,interpolate_bads=True)
 
-liste_tfr = [tfr[0] for tfr in liste_tfr]
 av_power_main = mne.grand_average(liste_tfr,interpolate_bads=True)
 
 #=======================save the grand averaged power======================
 av_power_main.save("../AV_TFR/all_sujets/main-tfr.h5",overwrite=True)
+av_power_main.save("../AV_TFR/all_sujets/main_noBaseline-tfr.h5",overwrite=True)
 av_power_mainIllusion.save("../AV_TFR/all_sujets/mainIllusion-tfr.h5",overwrite=True)
+av_power_mainIllusion.save("../AV_TFR/all_sujets/mainIllusion_noBaseline-tfr.h5",overwrite=True)
 avpower_main3cond_Moins_2cond.save("../AV_TFR/all_sujets/main3cond-2cond-tfr.h5",overwrite=True)
 avpower_pendule3cond_Moins_2cond.save("../AV_TFR/all_sujets/pendule3cond-2cond-tfr.h5",overwrite=True)
 
 av_power_pendule.save("../AV_TFR/all_sujets/pendule-tfr.h5",overwrite=True)
+av_power_pendule.save("../AV_TFR/all_sujets/pendule_noBaseline-tfr.h5",overwrite=True)
 av_power_pendule_2cond.save("../AV_TFR/all_sujets/pendule_2cond-tfr.h5",overwrite=True)
 #=============== load data average TFR============================
 av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")[0]
@@ -344,13 +305,14 @@ def plot_C3_power(powerObject,timesTrial,timesVibration,fmin,fmax,vmin,vmax):
         axes.axvline(27.02, color='black', linestyle='--')
     plt.show()
     return fig
+
 vmax = 0.42
 vmin = -vmax
 figPendule = plot_C3_power(av_power_pendule,True,False,3,40,vmin,vmax)
 figMain = plot_C3_power(av_power_main,True,False,3,40,vmin,vmax)
 figMainIllusion = plot_C3_power(av_power_mainIllusion,True,True,3,40,vmin,vmax)
 
-
+av_power_pendule.plot(block=True)
 raw_signal.plot(block=True)
     
 
@@ -360,15 +322,29 @@ av_power = av_power_pendule
 # av_power.plot([6], baseline=None, modliste_tfr_mainIllusion = liste_tfr.copy()e='logratio', title=av_power.ch_names[5],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#c3
 # av_power.plot([22], baseline=None, mode='logratio', title=av_power.ch_names[19],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#cz
 # av_power.plot([23], baseline=None, mode='logratio', title=av_power.ch_names[20],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#c4
-av_power.plot_topo(fmax=35)#cliquer sur C3,Cz,C4 et sauver graphes
+av_power.plot_topo(fmin=15,fmax=20,tmin=tmin,tmax=tmax)#cliquer sur C3,Cz,C4 et sauver graphes
 
 raw_signal.plot(block=True)#debloquer graphes
 # #=====================Compute difference between conditions======================================
 tmin = 2.5
 tmax = 26.8
-av_power_pendule.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
-av_power_main.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
-av_power_mainIllusion.plot_topomap(fmin=12,fmax=15,tmin=tmin,tmax=tmax,vmin=-0.3,vmax=0.3,cmap=my_cmap)
+v = 0.26
+av_power_pendule.plot_topomap(fmin=8,fmax=30,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap,colorbar=True)
+av_power_main.plot_topomap(fmin=8,fmax=30,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap,colorbar=True)
+av_power_mainIllusion.plot_topomap(fmin=8,fmax=30,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap,colorbar=True)
+raw_signal.plot(block=True)
+
+
+tmin = 2.5
+tmax = 26.8
+av_power_pendule.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
+av_power_main.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
+av_power_mainIllusion.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
+raw_signal.plot(block=True)
+
+my_cmap = discrete_cmap(13, 'RdBu_r')
+avpower_main_moins_pendule.plot_topomap(fmin=15,fmax=20,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
+avpower_main_moins_mainIllusion.plot_topomap(fmin=15,fmax=20,tmin=2.5,tmax=26.8,vmin=-0.09,vmax=0.09,cmap=my_cmap)
 raw_signal.plot(block=True)
 
 avpower_main_moins_pendule = av_power_main - av_power_pendule

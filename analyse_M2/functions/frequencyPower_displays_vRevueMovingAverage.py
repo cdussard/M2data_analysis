@@ -108,33 +108,35 @@ def plot_condition(avpower_cond,fig, ax1,ax2,times,nomCondition,ymin,ymax):
     ax1.set_ylim([ymin,ymax])#ax1.set_ylim([-0.35, 0.3])#1.65e-11
     ax2.set_ylim([ymin,ymax])#ax2.set_ylim([-0.35, 0.3])#1.65e-11
     C3_freq_cond,C4_freq_cond = compute_freqBand_condition(3,7,avpower_cond)
+    #arr_C3_freq,arr_C4_freq = C3_freq_cond,C4_freq_cond
     arr_C3_freq,arr_C4_freq = computeC3C4MovingAverage_openvibe(C3_freq_cond,C4_freq_cond)
     start_times =[-5 + (1.75)*i for i in range(19)]#ou 35
     print(start_times)
     times_re = [start + 0.875 for start in start_times]#milieu de fenetre
+    #times_re = times#si pas de moyennage movingAverage
     print(times_re)
-    ax1.plot(times_re,arr_C3_freq,label="3-7Hz")
+    print(arr_C3_freq)
+    ax1.plot(times_re,arr_C3_freq,label="Theta(3-7Hz)")
     ax2.plot(times_re,arr_C4_freq,label="3-7Hz")
     
-    C3_freq_cond,C4_freq_cond = compute_freqBand_condition(8,13,avpower_cond)
+    C3_freq_cond,C4_freq_cond = compute_freqBand_condition(8,12,avpower_cond)
+    #arr_C3_freq,arr_C4_freq = C3_freq_cond,C4_freq_cond
     arr_C3_freq,arr_C4_freq = computeC3C4MovingAverage_openvibe(C3_freq_cond,C4_freq_cond)
-    ax1.plot(times_re,arr_C3_freq,label="8-13Hz")
-    ax2.plot(times_re,arr_C4_freq,label="8-13Hz")
+    ax1.plot(times_re,arr_C3_freq,label="Mu(8-12Hz)")
+    ax2.plot(times_re,arr_C4_freq,label="Mu(8-12Hz)")
     
-    C3_freq_cond,C4_freq_cond  = compute_freqBand_condition(13,20,avpower_cond)
+    C3_freq_cond,C4_freq_cond  = compute_freqBand_condition(13,30,avpower_cond)
+    #arr_C3_freq,arr_C4_freq = C3_freq_cond,C4_freq_cond
     arr_C3_freq,arr_C4_freq = computeC3C4MovingAverage_openvibe(C3_freq_cond,C4_freq_cond)
-    ax1.plot(times_re,arr_C3_freq,label="13-20Hz")
-    ax2.plot(times_re,arr_C4_freq,label="13-20Hz")
+    ax1.plot(times_re,arr_C3_freq,label="Beta(13-30Hz)")
+    ax2.plot(times_re,arr_C4_freq,label="Beta(13-30Hz)")
     
-    C3_freq_cond,C4_freq_cond = compute_freqBand_condition(20,30,avpower_cond)
+    C3_freq_cond,C4_freq_cond  = compute_freqBand_condition(31,50,avpower_cond)
+    #arr_C3_freq,arr_C4_freq = C3_freq_cond,C4_freq_cond
     arr_C3_freq,arr_C4_freq = computeC3C4MovingAverage_openvibe(C3_freq_cond,C4_freq_cond)
-    ax1.plot(times_re,arr_C3_freq,label="20-30Hz")
-    ax2.plot(times_re,arr_C4_freq,label="20-30Hz")
-    
-    C3_freq_cond,C4_freq_cond = compute_freqBand_condition(8,30,avpower_cond)
-    arr_C3_freq,arr_C4_freq = computeC3C4MovingAverage_openvibe(C3_freq_cond,C4_freq_cond)
-    ax1.plot(times_re,arr_C3_freq,label="8-30Hz")
-    ax2.plot(times_re,arr_C4_freq,label="8-30Hz")
+    ax1.plot(times_re,arr_C3_freq,label="High beta/Gamma (31-50Hz)")
+    ax2.plot(times_re,arr_C4_freq,label="High beta/Gamma (31-50Hz)")
+
     
     ax1.set_title("C3 : "+ nomCondition)
     ax2.set_title("C4 : "+ nomCondition)
@@ -187,7 +189,7 @@ def plot_allfreqBand_groupByFrequency(avpower_main,avpower_mainIllusion,avpower_
     return None#res_3_7,res_8_13,res_13_20,res_8_30#,res_13_20,res_20_30,
 
 
-# plot_allfreqBand_groupByFrequency(av_power_main_zscore,av_power_mainIllusion_zscore,av_power_pendule_zscore)
+# plot_allfreqBand_groupByFrequency(av_power_main,av_power_mainIllusion,av_power_pendule,-0.32,0.22)
 # raw_signal.plot(block=True)
 #res_8_13,res_13_20,res_20_30,res_8_30 = plot_allfreqBand_groupByFrequency(av_power_main,av_power_mainIllusion,av_power_pendule)
 
@@ -205,7 +207,8 @@ def plot_allfreqBand_groupByCondition(avpower_main,avpower_mainIllusion,avpower_
     axs[2,1].set(xlabel='Time(s)')
     return True
 
-#plot_allfreqBand_groupByCondition(av_power_main,av_power_mainIllusion,av_power_pendule)
+plot_allfreqBand_groupByCondition(av_power_main,av_power_mainIllusion,av_power_pendule,-0.35,0.25)
+raw_signal.plot(block=True)
 #av_power_mainIllusion_noBL_seuil =  mne.time_frequency.read_tfrs("../withoutBaseline/mainIllusionSeuil_mean-tfr.h5")[0]
 
 #plot_allfreqBand_groupByCondition(av_power_main_noBL_seuil,av_power_mainIllusion_noBL_seuil,av_power_pendule_noBL_seuil)

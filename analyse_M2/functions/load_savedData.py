@@ -149,34 +149,6 @@ def save_topo_data(power,dureePreBaseline,valeurPostBaseline,path_sujet,mode,nom
     scale_highBeta = ScalesSujetsGraphes_HighBeta[i]
     scale_lowGamma = ScalesSujetsGraphes_LowGamma[i]
     scale_highGamma = ScalesSujetsGraphes_HighGamma[i] #MODIFIE POUR QUE SMR, A REMETTRE EN DECOMMENTANT SI BESOIN
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 12,fmax=15,tmin=tmin,tmax=tmax,vmin=-scale_lowBeta,vmax=scale_lowBeta,cmap=my_cmap)#alpha #mettre une echelle commune
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_12-15Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 3,fmax=7,tmin=tmin,tmax=tmax,vmin=-scale_theta,vmax=scale_theta,cmap=my_cmap)#theta
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_3-7Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 8,fmax=13,tmin=tmin,tmax=tmax,vmin=-scale_alpha,vmax=scale_alpha,cmap=my_cmap)#alpha #mettre une echelle commune
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_8-13Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 13,fmax=20,tmin=tmin,tmax=tmax,vmin=-scale_lowBeta,vmax=scale_lowBeta,cmap=my_cmap)#low beta
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_13-20Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 20,fmax=30,tmin=tmin,tmax=tmax,vmin=-scale_highBeta,vmax=scale_highBeta,cmap=my_cmap)#high beta
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_20-30Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 30,fmax=50,tmin=tmin,tmax=tmax,vmin=-scale_lowGamma,vmax=scale_lowGamma,cmap=my_cmap)#gamma
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_30-50Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
-    # fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 50,fmax=80,tmin=tmin,tmax=tmax,vmin=-scale_highGamma,vmax=scale_highGamma,cmap=my_cmap)#gamma
-    # fig.set_size_inches(25.5, 12.5)
-    # plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_50-80Hz.png",bbox_inches='tight',transparent=True)#save components picture
-    # plt.close(fig)
     fig = power.plot_topomap(baseline=baseline,mode=mode,fmin = 8,fmax=30,tmin=tmin,tmax=tmax,vmin=-scale_8a30Hz,vmax=scale_8a30Hz,cmap=my_cmap)#8-30Hz
     fig.set_size_inches(25.5, 12.5)
     plt.savefig(directory+ path_raccourci_split[0] +"-"+nomCond+"_8-30Hz.png",bbox_inches='tight',transparent=True)#save components picture
@@ -209,11 +181,15 @@ def save_ICA_files(liste_ICA,liste_rawPathmodif,windows):
     print("done saving")
     return True
 
-def load_ICA_files(liste_rawPath):
+def load_ICA_files_windows(liste_rawPath,windows):
     liste_ICA = []
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     for rawPath in liste_rawPath:
         path_raccourci = str(rawPath)[0:len(str(rawPath))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../ICA/" + path_raccourci_split[0] + "/" 
         fname = directory+ path_raccourci_split[3][:-1] + "-ica.fif"
         ica_i = mne.preprocessing.read_ica(fname, verbose=None)
@@ -228,14 +204,18 @@ def saveEpochsAfterICA_apresdropBad_windows(listeEpochs,liste_rawPath,windows): 
     else:
         charac_split = "/"
     for signal in listeEpochs:
-        path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
-        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split(charac_split)
-        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        signal.save(directory+ path_raccourci_split[3] +"fif",overwrite=True)
+        if signal is not None:
+            path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
+            path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+            path_raccourci_split = path_raccourci.split(charac_split)
+            directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            signal.save(directory+ path_raccourci_split[3] +"fif",overwrite=True)
+        else:
+            print("signal is NONE")
         i += 1
+            
     print("done saving")
     return True
 
@@ -303,7 +283,7 @@ def save_tfr_data(listeAverageTFR,listerawPath,suffixe,windows):
 
 import scipy
 from scipy import io
-def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline):
+def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline,tmin,tmax):
     if suffixe != "":
         suffixe = "-" + suffixe
     i = 0
@@ -315,14 +295,16 @@ def save_tfr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baselin
         directory = "../MATLAB_DATA/" + path_raccourci_split[0] + "/"
         if not os.path.exists(directory):
             os.makedirs(directory)
+        
         if doBaseline:
             averageTFR.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        averageTFR.crop(tmin=tmin,tmax=tmax)
         io.savemat(directory+ path_raccourci_split[0] + suffixe+".mat", {'data': averageTFR.data })
         i += 1
     print("done saving")
     return True
 
-def save_elec_fr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline,windows):
+def save_elec_fr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,baseline,tmin,tmax,windows):
     if windows:
         charac_split = "\\"
     else:
@@ -340,6 +322,7 @@ def save_elec_fr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,bas
             os.makedirs(directory)
         if doBaseline:
             averageTFR.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
+        averageTFR.crop(tmin=tmin,tmax=tmax)
         #mean over time 
         averageTFR_withoutTime = np.mean(averageTFR.data,axis=2)
         scipy.io.savemat(directory+ path_raccourci_split[0] + suffixe+"timePooled"+".mat", {'data': averageTFR_withoutTime.data })
@@ -406,32 +389,6 @@ def load_tfr_data(liste_rawPath,suffixe):
     return liste_tfr
     
 
-# def load_data_postICA_postdropBad(liste_rawPath,suffixe):
-#     if suffixe != "":
-#         suffixe = "-" + suffixe
-#     import os
-#     liste_signaux_loades = []   
-#     i = 0
-#     for path in liste_rawPath:
-#         path_sujet = liste_rawPath[i]
-#         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-#         path_raccourci_split = path_raccourci.split('/')
-#         print(path_raccourci_split)
-#         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
-#         print(directory)
-#         if os.path.exists(directory):
-#             try:
-#                 signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")
-#             except OSError as e:
-#                 print(e.errno)
-#         else:
-#             print("sujet "+str(i)+" non traité")
-#         liste_signaux_loades.append(signal)
-#         i += 1
-#     return liste_signaux_loades
-
-
-
 def load_data_postICA_postdropBad_windows(liste_rawPath,suffixe,windows):
     if windows:
         charac_split = "\\"
@@ -459,7 +416,11 @@ def load_data_postICA_postdropBad_windows(liste_rawPath,suffixe,windows):
         i += 1
     return liste_signaux_loades
 
-def load_data_postICA_preDropbad(liste_rawPath,suffixe):
+def load_data_postICA_preDropbad(liste_rawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
     if suffixe != "":
         suffixe = "-" + suffixe
     import os
@@ -468,7 +429,7 @@ def load_data_postICA_preDropbad(liste_rawPath,suffixe):
     for path in liste_rawPath:
         path_sujet = liste_rawPath[i]
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
-        path_raccourci_split = path_raccourci.split('/')
+        path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../EPOCH_ICA_avant_dropBad_avant_averageRef/" + path_raccourci_split[0] + "/"
         print(directory)
         if os.path.exists(directory):
@@ -517,10 +478,6 @@ def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows,avant
 def discrete_cmap(N, base_cmap=None):
     """Create an N-bin discrete colormap from the specified input map"""
 
-    # Note that if base_cmap is a string or None, you can simply do
-    #    return plt.cm.get_cmap(base_cmap, N)
-    # The following works for string, None, or a colormap instance:
-
     base = plt.cm.get_cmap(base_cmap)
     color_list = base(np.linspace(0, 1, N))
     cmap_name = base.name + str(N)
@@ -542,23 +499,7 @@ from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColor
     LogNorm
 import numpy as np
 def cmap_discrete(cmap_list):#vole de panda power
-    """
-    Can be used to create a discrete colormap.
-    INPUT:
-        - cmap_list (list) - list of tuples, where each tuple represents one range. Each tuple has
-                             the form of ((from, to), color).
-    OUTPUT:
-        - cmap - matplotlib colormap
-        - norm - matplotlib norm object
-    EXAMPLE:
-        >>> from pandapower.plotting import cmap_discrete, create_line_collection, draw_collections
-        >>> from pandapower.networks import mv_oberrhein
-        >>> net = mv_oberrhein("generation")
-        >>> cmap_list = [((0, 10), "green"), ((10, 30), "yellow"), ((30, 100), "red")]
-        >>> cmap, norm = cmap_discrete(cmap_list)
-        >>> lc = create_line_collection(net, cmap=cmap, norm=norm)
-        >>> draw_collections([lc])
-    """
+
     cmap_colors = []
     boundaries = []
     last_upper = None
@@ -574,32 +515,6 @@ def cmap_discrete(cmap_list):#vole de panda power
     return cmap, norm
 
 def cmap_logarithmic(min_value, max_value, colors):#vole de panda power
-    """
-        Can be used to create a logarithmic colormap. The colormap itself has a linear segmentation of
-        the given colors. The values however will be matched to the colors based on a logarithmic
-        normalization (c.f. matplotlib.colors.LogNorm for more information on how the logarithmic
-        normalization works).
-        \nPlease note: {There are numerous ways of how a logarithmic scale might
-                        be created, the intermediate values on the scale are created automatically based on the minimum
-                        and maximum given values in analogy to the LogNorm. Also, the logarithmic colormap can only be
-                        used with at least 3 colors and increasing values which all have to be above 0.}
-        INPUT:
-            **min_value** (float) - the minimum value of the colorbar
-            **max_value** (float) - the maximum value for the colorbar
-            **colors** (list) - list of colors to be used for the colormap
-        OUTPUT:
-            **cmap** - matplotlib colormap
-            **norm** - matplotlib norm object
-        EXAMPLE:
-        >>> from pandapower.plotting import cmap_logarithmic, create_bus_collection, draw_collections
-        >>> from pandapower.networks import mv_oberrhein
-        >>> net = mv_oberrhein("generation")
-        >>> min_value, max_value = 1.0, 1.03
-        >>> colors = ["blue", "green", "red"]
-        >>> cmap, norm = cmap_logarithmic(min_value, max_value, colors)
-        >>> bc = create_bus_collection(net, size=70, cmap=cmap, norm=norm)
-        >>> draw_collections([bc])
-    """
 
     from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColormap, Normalize, \
     LogNorm
@@ -617,109 +532,3 @@ def cmap_logarithmic(min_value, max_value, colors):#vole de panda power
     cmap = LinearSegmentedColormap.from_list("name", list(zip(values, colors)))
     norm = LogNorm(min_value, max_value)
     return cmap, norm
-
-
-# if __name__ == '__main__':
-#     N = 5
-
-#     x = np.random.randn(40)
-#     y = np.random.randn(40)
-#     c = np.random.randint(N, size=40)
-
-#     # Edit: don't use the default ('jet') because it makes @mwaskom mad...
-#     plt.scatter(x, y, c=c, s=50, cmap=discrete_cmap(N, 'cubehelix'))
-#     plt.colorbar(ticks=range(N))
-#     plt.clim(-0.5, N - 0.5)
-#     plt.show()
-
-
-# def plotSave_power_topo_cond_chooseScale(epochData_main,listeRawPath_main,epochData_mainIllusion,listeRawPath_mainIllusion,epochData_pendule,listeRawPath_pendule,freqMin,freqMax,downSampleFreq,tmin,tmax): # compute, plot & save images for individual & all subjects data
-#     import matplotlib.pyplot as plt    
-#     #====================individual data=============================
-#     i = 0
-#     freqs = np.arange(freqMin, freqMax, 1)  # frequencies from 2-35Hz
-#     n_cycles = freqs 
-#     dureePreBaseline = 3.0
-#     dureePreBaseline = - dureePreBaseline
-#     dureeBaseline = 2.0
-#     valeurPostBaseline = dureePreBaseline + dureeBaseline
-#     mode = 'logratio'
-#     liste_power_sujets_main = []
-#     liste_power_sujets_mainIllusion = []
-#     liste_power_sujets_pendule = []
-#     ScalesSujetsGraphes_8a30Hz = [0.2]
-#     ScalesSujetsGraphes_Theta = [0.24]
-#     ScalesSujetsGraphes_Alpha = [0.4]
-#     ScalesSujetsGraphes_LowBeta = [0.24]
-#     ScalesSujetsGraphes_HighBeta = [0.28]
-#     ScalesSujetsGraphes_LowGamma = [0.24]
-#     ScalesSujetsGraphes_HighGamma = [0.24]
-#     for epochData_main_sujet,rawPath_main_sujet,epochData_mainIllusion_sujet,rawPath_mainIllusion_sujet,epochData_pendule_sujet,rawPath_pendule_sujet  in zip(epochData_main,listeRawPath_main,epochData_mainIllusion,listeRawPath_mainIllusion,epochData_pendule,listeRawPath_pendule):
-#         print("\n===========Sujet S "+str(allSujetsDispo[i])+"========================\n")#a remplacer si on fait des subsets de sujets
-#         epochData_main_sujet_down = epochData_main_sujet.resample(downSampleFreq, npad='auto') 
-#         epochData_mainIllusion_sujet_down = epochData_mainIllusion_sujet.resample(downSampleFreq, npad='auto') 
-#         epochData_pendule_sujet_down = epochData_pendule_sujet.resample(downSampleFreq, npad='auto') 
-#         #compute power
-#         print("computing power...")
-#         power_sujet_main = mne.time_frequency.tfr_morlet(epochData_main_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False)#,return_itc=False, decim=3, n_jobs=1)
-#         power_sujet_mainIllusion = mne.time_frequency.tfr_morlet(epochData_mainIllusion_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False)#,return_itc=False, decim=3, n_jobs=1)
-#         power_sujet_pendule = mne.time_frequency.tfr_morlet(epochData_pendule_sujet_down,freqs=freqs,n_cycles=n_cycles,return_itc=False)#,return_itc=False, decim=3, n_jobs=1)
-#         #compute topomaps
-#         path_sujet_main = listeRawPath_main[i]
-#         path_sujet_mainIllusion = listeRawPath_mainIllusion[i]
-#         path_sujet_pendule = listeRawPath_pendule[i]
-#         print("computing & saving individual topomaps...")
-#         save_topo_data_chooseScale(power_sujet_main,power_sujet_mainIllusion,power_sujet_pendule,dureePreBaseline,valeurPostBaseline,path_sujet_main,path_sujet_mainIllusion,path_sujet_pendule,mode,True,tmin,tmax)
-#         liste_power_sujets_main.append(power_sujet_main)
-#         liste_power_sujets_mainIllusion.append(power_sujet_mainIllusion)
-#         liste_power_sujets_pendule.append(power_sujet_pendule)
-#         i +=1
-#     return liste_power_sujets_main,liste_power_sujets_mainIllusion,liste_power_sujets_pendule
-
-
-
-# def save_topo_data_chooseScale(powerMain,powerMainIllusion,powerPendule,dureePreBaseline,valeurPostBaseline,path_sujet_main,path_sujet_mainIllusion,path_sujet_pendule,mode,doBaseline,tmin,tmax):
-#     if doBaseline ==False:
-#         print("no baseline")
-#         baseline = None
-#     elif doBaseline == True:
-#         baseline = (dureePreBaseline,valeurPostBaseline)
-#     if path_sujet_main!= "all_sujets":                                                    #and having parameters for the max values of the graphs
-#         path_raccourci = str(path_sujet_main)[0:len(str(path_sujet_main))-4]
-#         path_raccourci_split = path_raccourci.split('/')
-#         directory = "../images/" + path_raccourci_split[0] + "/" 
-#     else:
-#         directory = "../images/"+path_sujet_main+"/"
-#         path_raccourci_split = ["all_sujets"]
-#     #check if directory exists
-#     if not os.path.exists(directory): 
-#         os.makedirs(directory)      #1.5 tmin 25.5 tmax
-     
-
-#     #plot 3 plot conditions for theta 3-7Hz
-#     plotSaveGraph(8,30,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_8a30Hz)
-#     plotSaveGraph(3,7,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_Theta)
-#     plotSaveGraph(8,13,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_Alpha)
-#     plotSaveGraph(13,20,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_LowBeta)
-#     plotSaveGraph(20,30,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_HighBeta)
-#     plotSaveGraph(30,50,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_LowGamma)
-#     plotSaveGraph(50,80,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split,ScalesSujetsGraphes_HighGamma)
-    
-
-# def plotSaveGraph(freqMin,freqMax,powerMain,powerPendule,powerMainIllusion,baseline,mode,tmin,tmax,directory,path_raccourci_split):
-#     figMain = powerMain.plot_topomap(baseline=baseline,mode=mode,fmin = freqMin,fmax=freqMax,tmin=tmin,tmax=tmax,vmin=-0.25,vmax=0.25)
-#     figPendule = powerPendule.plot_topomap(baseline=baseline,mode=mode,fmin = freqMin,fmax=freqMax,tmin=tmin,tmax=tmax,vmin=-0.25,vmax=0.25)
-#     figMainIllusion = powerMainIllusion.plot_topomap(baseline=baseline,mode=mode,fmin = freqMin,fmax=freqMax,tmin=tmin,tmax=tmax,vmin=-0.25,vmax=0.25)
-#     #regler mutuellement l'echelle
-#     raw_signal.plot(block=True)#artificiel pour bloquer la fenetre car pas de param block a plot topomap
-#     #sauver figures avec le bon nom
-#     figMain.set_size_inches(25.5, 12.5)
-#     figMain.savefig(directory+ path_raccourci_split[0] +"-"+"main"+"_"+str(freqMin)+"-"+str(freqMax)+"Hz.png",bbox_inches='tight',transparent=True)#save components picture
-#     plt.close(figMain)
-#     figMainIllusion.set_size_inches(25.5, 12.5)
-#     figMainIllusion.savefig(directory+ path_raccourci_split[0] +"-"+"mainIllusion"+"_"+str(freqMin)+"-"+str(freqMax)+"Hz.png",bbox_inches='tight',transparent=True)#save components picture
-#     plt.close(figMainIllusion)
-#     figPendule.set_size_inches(25.5, 12.5)
-#     figPendule.savefig(directory+ path_raccourci_split[0] +"-"+"pendule"+"_"+str(freqMin)+"-"+str(freqMax)+"Hz.png",bbox_inches='tight',transparent=True)#save components picture
-#     plt.close(figPendule)
-    

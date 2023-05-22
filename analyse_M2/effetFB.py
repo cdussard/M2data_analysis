@@ -60,7 +60,7 @@ save_ICA_files(listeICA,rawPathEffetFBseul_sujets,True)
 #load saved Data
 EpochDataMain = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"main",True,False)
 
-EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"pendule",True,False)
+EpochDataPendule = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul[0:2],"pendule",True,False)
 
 EpochDataMainIllusion = load_data_postICA_preDropbad_effetFBseul(liste_rawPathEffetFBseul,"mainIllusion",True,False)
 #====================drop epochs with artefacts ======================
@@ -339,15 +339,19 @@ v = 0.5
 av_power_pendule.plot(picks="C3",fmin=3,fmax=40,vmin=-v,vmax=v)
 av_power_main.plot(picks="C3",fmin=3,fmax=40,vmin=-v,vmax=v)
 av_power_mainIllusion.plot(picks="C3",fmin=3,fmax=40,vmin=-v,vmax=v)
+raw_signal.plot(block=True)
 v = 0.5
 av_power_pendule.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25,cmap=my_cmap,vmin=-v,vmax=v)
 av_power_main.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25,cmap=my_cmap,vmin=-v,vmax=v)
 av_power_mainIllusion.plot_topomap(fmin=8,fmax=30,tmin=2,tmax=25,cmap=my_cmap,vmin=-v,vmax=v)
 raw_signal.plot(block=True)
 #on peut centrer le plot main Illusion sur les moments de vibration
+av_power_mainIllusion.plot_topomap(fmin=8,fmax=30,tmin=6,tmax=9,cmap=my_cmap,vmin=-v,vmax=v)
 
-av_power_pendule.data.shape
-
+av_power_pendule.plot(picks="C4",fmin=3,fmax=40,vmin=-v,vmax=v)
+av_power_main.plot(picks="C4",fmin=3,fmax=40,vmin=-v,vmax=v)
+av_power_mainIllusion.plot(picks="C4",fmin=3,fmax=40,vmin=-v,vmax=v)
+raw_signal.plot(block=True)
 
 
 
@@ -456,3 +460,57 @@ for ax in axs.flat:
         ax.axhline(y=elecPos,color="dimgray",lw=0.25)
 #plt.tight_layout(pad=0.04) 
 raw_signal.plot(block=True)#specifier le x
+
+
+#=essayer de normalizer autrement
+
+data = load_tfr_data_windows(liste_rawPathMain[0:1],"",True)
+liste_tfr_p = load_tfr_data_windows(liste_rawPathEffetFBseul[0:2],"pendule",True)
+
+data = liste_tfr_p
+ch_C3 = 5
+if data[0].info.ch_names[ch_C3] == "C3":
+    yo = data[0].data[ch_C3]
+    
+    valsMoyFreq = []
+    for freq in range(82):
+        valMoyenneFreq = np.mean(yo[freq])
+        valsMoyFreq.append(valMoyenneFreq)
+        print(yo[freq][0])
+        yo[freq] = yo[freq]/valMoyenneFreq
+        print(yo[freq][0])
+        
+    data[0].data[ch_C3]
+    
+    data[0].plot(picks=["C3"],fmax=40,baseline=(-3,-1),mode="logratio")
+    raw_signal.plot(block=True)
+    
+#==================
+
+data = load_tfr_data_windows(liste_rawPathMain,"",True)
+av_power_main = mne.grand_average(data,interpolate_bads=True)
+av_power_main.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)#av tfr sans BL mais avec bonne echelle
+raw_signal.plot(block=True)
+
+data = load_tfr_data_windows(liste_rawPathPendule,"",True)
+av_power_pendule = mne.grand_average(data,interpolate_bads=True)
+av_power_pendule.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)#av tfr sans BL mais avec bonne echelle
+raw_signal.plot(block=True)
+
+data = load_tfr_data_windows(liste_rawPathMainIllusion,"",True)
+av_power_main = mne.grand_average(data,interpolate_bads=True)
+av_power_main.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)#av tfr sans BL mais avec bonne echelle
+raw_signal.plot(block=True)
+
+#♦effet FB
+
+liste_tfr_p = load_tfr_data_windows(liste_rawPathEffetFBseul,"pendule",True)
+liste_tfr_m = load_tfr_data_windows(liste_rawPathEffetFBseul,"main",True)
+liste_tfr_mi = load_tfr_data_windows(liste_rawPathEffetFBseul,"mainIllusion",True)
+av_power_p = mne.grand_average(liste_tfr_p,interpolate_bads=True)
+av_power_p.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)#av tfr sans BL mais avec bonne echelle
+av_power_m = mne.grand_average(liste_tfr_m,interpolate_bads=True)
+av_power_m.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)
+av_power_mi = mne.grand_average(liste_tfr_mi,interpolate_bads=True)
+av_power_mi.plot(picks=["C3"],fmax=40,cmap=discrete_cmap(13, 'Reds'),vmin=0,vmax=3e-10)
+raw_signal.plot(block=True)

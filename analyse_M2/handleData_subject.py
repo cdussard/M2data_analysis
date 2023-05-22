@@ -119,7 +119,7 @@ def createSujetsData_obsExec():
 
     return essaisObsExecIm,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets
      
-#=========================test donnees sur 1 sujet=============================================================================
+# =========================test donnees sur 1 sujet=============================================================================
 # num_sujet = 19
 # sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
 # sample_data_dir = pathlib.Path(sample_data_loc)

@@ -21,7 +21,6 @@ nom_essai = "2-2"
 allSujetsDispo_MI = allSujetsDispo[2:]
 
            
-        
 #on commence au 3 (reste pbs noms)
 liste_rawPath_rawMIalone = []
 for num_sujet in allSujetsDispo_MI:
@@ -43,7 +42,6 @@ for num_sujet in allSujetsDispo_MI:
 
 print(liste_rawPath_rawMIalone)
 
-
 #pour se placer dans les donnees lustre
 os.chdir("../../../../")
 lustre_data_dir = "_RAW_DATA"
@@ -51,6 +49,8 @@ lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
 event_id={'Motor imagery alone':21}
+raw_signal = mne.io.read_raw_brainvision(liste_rawPath_rawMIalone[4],preload=True,eog=('HEOG', 'VEOG'))
+
 liste_epochsPreICA,liste_epochsSignal = pre_process_donnees(liste_rawPath_rawMIalone,1,0.1,90,[50,100],31,'Fz',event_id,)#que 2 premiers sujets
 
 listeICApreproc=[]
@@ -108,6 +108,10 @@ save_tfr_data(liste_power_sujets,liste_rawPath_rawMIalone,"",True)
 liste_power_sujets = load_tfr_data_windows(liste_rawPath_rawMIalone,"",True)
 
 
+#sans BL
+av_power_MIalone.plot(picks="C3",fmin=3,fmax=40,vmin=0,vmax = 0.3e-9,cmap=my_cmap)
+raw_signal.plot(block=True)
+
 listeRaw = read_raw_data(liste_rawPath_rawMIalone[10:12])
 events = mne.events_from_annotations(listeRaw[0])[0]
 print(events)
@@ -122,13 +126,22 @@ for tfr in liste_power_sujets:
 av_power_MIalone = mne.grand_average(liste_power_sujets,interpolate_bads=True)
 
 my_cmap = discrete_cmap(13, 'RdBu_r')
-av_power_MIalone.plot_topomap(fmin=8,fmax=30,tmin=1,tmax=26.5,cmap = my_cmap)
-av_power_MIalone.plot_topomap(fmin=8,fmax=30,tmin=1,tmax=26.5,cmap = my_cmap,vmin=-0.3,vmax=0.3)
+av_power_MIalone.plot_topomap(fmin=10,fmax=15,tmin=5,tmax=26.5,cmap = my_cmap)
+av_power_MIalone.plot_topomap(fmin=8,fmax=30,tmin=5,tmax=26.5,cmap = my_cmap,vmin=-0.3,vmax=0.3)
 av_power_MIalone.plot(picks="C3",fmin=3,fmax=40,vmin=-0.4,vmax=0.4)
 raw_signal.plot(block=True)
 
 av_power_MIalone.save("../AV_TFR/all_sujets/MIalone-tfr.h5",overwrite=True)
+av_power_MIalone.save("../AV_TFR/all_sujets/MIalone_noBaseline-tfr.h5",overwrite=True)
 av_power_MIalone =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/MIalone-tfr.h5")[0]
+
+
+
+my_cmap = discrete_cmap(13, 'RdBu_r')
+av_power_MIalone.plot(picks="C3",cmap=my_cmap,fmax=80,vmin=-0.4,vmax=0.4)
+av_power_MIalone.plot(picks="C4",cmap=my_cmap,fmax=80,vmin=-0.4,vmax=0.4)
+av_power_MIalone.plot_topomap(tmin=5,tmax=26,fmin=12,fmax=15,cmap=my_cmap,vmin=-0.25,vmax=0.25)
+raw_signal.plot(block=True)
 
 data = av_power_MIalone.data
 data_meanTps = np.mean(data,axis=2)
@@ -158,6 +171,7 @@ plot_elec_cond(av_power_pendule,elec_name,"pendule",elec_pos,freqs,fig,ax,scaleM
 plot_elec_cond(av_power_main,elec_name,"main",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
 plot_elec_cond(av_power_mainIllusion,elec_name,"mainIllusion",elec_pos,freqs,fig,ax,scaleMin,scaleMax,1.5,26.5)
 plot_elec_cond(av_power_MIalone,elec_name,"MI_alone",elec_pos,freqs,fig,ax,scaleMin,scaleMax,2,26.5)
+plot_elec_cond(av_power_Rest,"C3","Rest",11,freqs,fig,ax,scaleMin,scaleMax,5,10)
 plt.ylim([scaleMin, scaleMax])
 plt.xlim([2, 55])
 raw_signal.plot(block=True)

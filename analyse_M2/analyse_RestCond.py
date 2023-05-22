@@ -19,7 +19,11 @@ essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsD
 
 nom_essai = "1-2"#on prend seulement le premier de 2 min pour l'instant faire simple
 
-allSujetsDispo_rest = allSujetsDispo[0:12] + allSujetsDispo[13:]#S014 pas de marqueurs sur EEG, a voir + tard
+allSujetsDispo_rest = allSujetsDispo#S014 pas de marqueurs sur EEG, a voir + tard
+
+allSujetsDispo_rest.append(4)
+
+allSujetsDispo.pop()
         
 #on commence au 3 (reste pbs noms)
 liste_rawPath_rawRest = []
@@ -49,7 +53,12 @@ lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
 event_id={'Begin resting time':12}#TO DO  : modifier la duree des epochs pour avoir 2 min ? 
-liste_epochsPreICA,liste_epochsSignal = pre_process_donnees(liste_rawPath_rawRest,1,0.1,90,[50,100],31,'Fz',event_id,)#que 2 premiers sujets
+test = read_raw_data(liste_rawPath_rawRest[0:2])
+for ts in test:
+    events = mne.events_from_annotations(ts)
+    print(events)
+    
+liste_epochsPreICA,liste_epochsSignal = pre_process_donnees(liste_rawPath_rawRest[21:23],1,0.1,90,[50,100],31,'Fz',event_id,110)#que 2 premiers sujets
 
 listeICApreproc=[]
 listeICA= []
@@ -58,26 +67,39 @@ for i in range(len(liste_epochsPreICA)):
     listeICApreproc.append(averageRefSignal_i)
     listeICA.append(ICA_i)
     
-save_ICA_files(listeICA[0:2]+listeICA[3:],liste_rawPath_rawRest,True)#a faire
+    
+ICA_rest = load_ICA_files_windows(liste_rawPath_rawRest,True)
+for (epoch,ica) in zip(liste_epochsSignal,ICA_rest):
+    ica.apply(epoch)
+    
+save_ICA_files(listeICA,liste_rawPath_rawRest[21:23],True)#a faire : certains sont vides ??
+saveEpochsAfterICA_avantdropBad_windows(listeICApreproc,liste_rawPath_rawRest[21:23],True)
+
+save_ICA_files(listeICA[0:2]+listeICA[3:],liste_rawPath_rawRest,True)#a faire : certains sont vides ??
 saveEpochsAfterICA_avantdropBad_windows(listeICApreproc[0:2]+listeICApreproc[3:],liste_rawPath_rawRest,True)
 
-epochDataRest = load_data_postICA_preDropbad_effetFBseul(liste_rawPath_rawRest,"",True,True)
-
+epochDataRest = load_data_postICA_preDropbad_effetFBseul(liste_rawPath_rawRest[20:],"",True,True)
+epochDataRest = listeICApreproc
 
 initial_ref = "Fz"
 liste_epochs_averageRef_rest = []
-for num_sujet in range(len(allSujetsDispo_rest)):#range(len(epochDataMain_dropBad)):
+for epochSujet in epochDataRest:
+    print(epochSujet)
+    if epochSujet is not None:#range(len(epochDataMain_dropBad)):
     #============== PLOT & DROP EPOCHS========================================
-    epochDataRest[num_sujet].reorder_channels(channelsSansFz) #nathalie : mieux de jeter epochs avant average ref (sinon ça va baver partout artefact)
-    epochDataRest[num_sujet].plot(n_channels=35,n_epochs=1) #select which epochs, which channels to drop
-    raw_signal.plot(block=True)
-    #====================MI===============================================================
-    epochDataRest[num_sujet].info["bads"]=["FT9","FT10","TP9","TP10"]
-    signalInitialRef_main = mne.add_reference_channels(epochDataRest[num_sujet],initial_ref)
-    averageRefSignal_main = signalInitialRef_main.set_eeg_reference('average')
-    liste_epochs_averageRef_rest.append(averageRefSignal_main)
+        epochSujet.reorder_channels(channelsSansFz) #nathalie : mieux de jeter epochs avant average ref (sinon ça va baver partout artefact)
+        epochSujet.plot(n_channels=35,n_epochs=1) #select which epochs, which channels to drop
+        raw_signal.plot(block=True)
+        #====================MI===============================================================
+        epochSujet.info["bads"]=["FT9","FT10","TP9","TP10"]
+        signalInitialRef_main = mne.add_reference_channels(epochSujet,initial_ref)
+        averageRefSignal_main = signalInitialRef_main.set_eeg_reference('average')
+        liste_epochs_averageRef_rest.append(averageRefSignal_main)
+    else:
+        print("None")
+        liste_epochs_averageRef_rest.append(None)
 
-saveEpochsAfterICA_apresdropBad_windows(liste_epochs_averageRef_rest,liste_rawPath_rawRest,True)
+saveEpochsAfterICA_apresdropBad_windows(liste_epochs_averageRef_rest,liste_rawPath_rawRest[21:23],True)
 
 montageEasyCap = mne.channels.make_standard_montage('easycap-M1')
 for epochs in liste_epochs_averageRef_rest:
@@ -99,28 +121,18 @@ for epochs_sujet in EpochData:
     liste_power_sujets.append(power_sujet)
     i += 1
     
-save_tfr_data(liste_power_sujets,liste_rawPath_rawRest,"",True)
+save_tfr_data(liste_power_sujets,liste_rawPath_rawRest[21:23],"",True)
 
 liste_power_sujets = load_tfr_data_windows(liste_rawPath_rawRest,"",True)
-
-#explorer les data pour trouver la baseline
-
-
-
-
-listeRaw = read_raw_data(liste_rawPath_rawRest[0:2])
-events = mne.events_from_annotations(listeRaw[0])[0]
-print(events)
-events = mne.events_from_annotations(listeRaw[1])[0]
-print(events)
-
 
 #baseline par sujet
 baseline = (-3,0)
 for tfr in liste_power_sujets:
     tfr.apply_baseline(baseline=baseline, mode='logratio', verbose=None)
     
-av_power_Rest = mne.grand_average(liste_power_sujets[0:6]+liste_power_sujets[7:],interpolate_bads=True)
+av_power_Rest = mne.grand_average(liste_power_sujets[0:4]+liste_power_sujets[5:],interpolate_bads=True)
+av_power_Rest.save("../AV_TFR/all_sujets/rest-tfr.h5",overwrite=True)
+av_power_Rest.save("../AV_TFR/all_sujets/rest_noBaseline-tfr.h5",overwrite=True)
 
 my_cmap = discrete_cmap(13, 'RdBu_r')
 av_power_Rest.plot_topomap(fmin=8,fmax=30,tmin=5,tmax=30,cmap = my_cmap)
@@ -136,14 +148,18 @@ data_C3 = data_meanTps[11][:]
 data_C4 = data_meanTps[13][:]
 
 
+#from plotPsd import *
 
 fig, ax = plt.subplots()
-scaleMin = -0.4
-scaleMax = 0.05
-plot_elec_cond(av_power_Rest,"C3","Rest",11,freqs,fig,ax,scaleMin,scaleMax,1,30)
-plot_elec_cond(av_power_Rest,"C4","Rest",13,freqs,fig,ax,scaleMin,scaleMax,1,30)
+scaleMin = 0
+scaleMax = 1e-9
+plot_elec_cond(av_power_Rest,"C3","Rest",11,freqs,fig,ax,scaleMin,scaleMax,10,25)
+plot_elec_cond(av_power_Rest,"C4","Rest",13,freqs,fig,ax,scaleMin,scaleMax,10,25)
 
 raw_signal.plot(block=True)
+
+
+
 
 
 

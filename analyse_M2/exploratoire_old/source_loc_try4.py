@@ -95,6 +95,7 @@ brain_dics = stc_dics.plot(
 #stc_fsaverage = stc_dics.morph('fsaverage')
 #stcs = [stc_dics,stc_dics]
 
+#faire la moyenne sur les sujets
 data = np.mean([stc.data for stc in stcs], axis=0)
 ga_stc = mne.SourceEstimate(data, vertices=stcs[0].vertices,
                                 tmin=stcs[0].tmin, tstep=stcs[0].tstep)
