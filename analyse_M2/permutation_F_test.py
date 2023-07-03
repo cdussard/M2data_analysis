@@ -4,7 +4,6 @@ Created on Wed Apr 20 19:22:01 2022
 
 @author: claire.dussard
 """
-import pandas as pd
 import mne
 
 #dans l'ideal il faudrait avoir un permutation F test,
@@ -31,8 +30,8 @@ liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFina
 liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
 liste_tfrPendule = load_tfr_data_windows(liste_rawPathPendule[0:2],"",True)
-liste_tfrMain = load_tfr_data_windows(liste_rawPathMain,"",True)
-liste_tfrMainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion,"",True)
+liste_tfrMain = load_tfr_data_windows(liste_rawPathMain[0:2],"",True)
+liste_tfrMainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion[0:2],"",True)
 
 
 def copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
@@ -255,13 +254,6 @@ def data_freq_tTest_perm_allElec(fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_ma
         powerFreq_mainI = np.median(liste_tfr_mainIllusion[i].data,axis=2)
         print(powerFreq_main.flatten().shape)
         print(tableau_main[i].shape)#ne pas flatten sinon on perd les frequences ??
-        #print(powerFreq_main)
-        #print(tableau_main[i])
-        #avant on remplacait le empty, la c'est des zeros somehow
-        # tableau_main[i]= powerFreq_main.flatten()
-        # tableau_pendule[i] = powerFreq_pendule.flatten()
-        # tableau_mainIllusion[i] = powerFreq_mainI.flatten()
-        # print(tableau_main[i])
         print("yo")
         #print(yo)
         #print(yo.shape)
@@ -285,6 +277,7 @@ av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-t
 liste_pendule = []
 liste_main = []
 liste_mainIllusion = []
+#
 for elec in av_power_pendule.ch_names:
     print("ELEC  "+elec)
     liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
@@ -375,9 +368,13 @@ raw_signal.plot(block=True)
 # p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_pend.txt")
 # p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_main.txt")
 # p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_mIll.txt")
-p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_pend.csv",header=None)
-p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_main.csv",header=None)
-p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_mainIllusion.csv",header=None)
+# p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_pend.csv",header=None)
+# p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_main.csv",header=None)
+# p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_mainIllusion.csv",header=None)
+p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_pend.csv",header=None)
+p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_main.csv",header=None)
+p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_mIll.csv",header=None)
+
 # p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_pend.txt")
 # p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_main.txt")
 # p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_mainIllusion.txt")

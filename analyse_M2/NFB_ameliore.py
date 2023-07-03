@@ -66,9 +66,13 @@ saveEpochsAfterICA_avantdropBad(listeEpochs_pendule,rawPath_pendule_sujets)
 saveEpochsAfterICA_avantdropBad(listeEpochs_mainIllusion,rawPath_mainIllusion_sujets)
 
 #ENSUITE DROP DES EPOCHS
-epochDataMain_dropBad = load_data_postICA_preDropbad(rawPath_main_sujets,"")
+epochDataMain_dropBad = load_data_postICA_preDropbad(rawPath_main_sujets,"",True)
 EpochDataPendule_dropBad = load_data_postICA_preDropbad(rawPath_pendule_sujets,"")
 EpochDataMainIllusion_dropBad = load_data_postICA_preDropbad(rawPath_mainIllusion_sujets,"")
+
+#average ref data
+
+
 
 #display epochs, chose which to drop
 initial_ref = 'Fz'

@@ -115,10 +115,11 @@ def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEp
     return liste_epochsPreICA,liste_epochsSignal
 
 def change_order_channels(channels,listeSignals):
-    listeEpochs_bonOrdreChannels = []
+    bonOrdreSignals = []
     for signal in listeSignals:
         print(signal.ch_names)
-        signal.copy().reorder_channels(channels)
+        bonOrdreSignals.append(signal.copy().reorder_channels(channels))
+        
     return bonOrdreSignals
     
 def mark_bad_electrodes(listeSignals,listeElectrodesBad):
