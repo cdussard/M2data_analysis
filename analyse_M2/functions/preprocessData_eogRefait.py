@@ -106,9 +106,7 @@ def epoching(event_id,listeFilteredICA,listeFilteredSignal,dureeEpoch,dureePreEp
          # if len(epochsICA)>0:
          #     epochsICA.plot(block=True)#mark bad
          epochsICA.info["bads"] = epochsCibles.info["bads"]
-         #instead of rejecting epoch, mark bad and drop if len(bad channels >6 ?) Fp1 & Fp2 merdent tjrs
-         #epochsCibles.plot_drop_log()
-         #print(epochsCibles)     
+
          liste_epochsSignal.append(epochsCibles)
          liste_epochsPreICA.append(epochsICA)
          i += 1
@@ -145,7 +143,7 @@ def pre_process_donnees(listeRawPath,low_freqICA,lowFreqSignal,high_freq,notch_f
     listeFilteredICA_bad = mark_bad_electrodes(listeFilteredICA,['TP9','TP10','FT9','FT10'])
     #epoching
     dureeEpoch = epochDuration#29.3#entre 28.6 et 31.1 24s en vrai
-    dureePreEpoch = 5.0
+    dureePreEpoch = 2#5.0
     reject = dict(eeg=50e-5 # unit: V (EEG channels) & 100 on drop rien, a 10 on drop tout ?
               )
     liste_epochsPreICA,liste_epochsSignal = epoching(event_id,listeFilteredICA_bad,listeFilteredSignal_bad,dureeEpoch,dureePreEpoch)

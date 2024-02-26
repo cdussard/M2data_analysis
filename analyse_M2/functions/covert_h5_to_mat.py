@@ -21,7 +21,6 @@ import mne
 # sio.savemat('test.mat',df)
 
 data_num = yo.data
-
 sio.savemat('test2.mat', {'data': data_num})
 ['Fp1', 'Fp2', 'F7',
  'F3', 'F4', 'F8', 'FC5', 'FC1', 'FC2', 'FC6', 'T7',

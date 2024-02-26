@@ -341,6 +341,18 @@ raw_signal.plot(block=True)
 
 tmin = 2.5
 tmax = 26.8
+v = 0.1
+my_cmap = discrete_cmap(13, 'RdBu')
+my_cmap_rev = my_cmap.reversed()
+av_power_pendule.plot_topomap(fmin=3,fmax=7,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap_rev,colorbar=True)
+av_power_main.plot_topomap(fmin=3,fmax=7,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap_rev,colorbar=True)
+av_power_mainIllusion.plot_topomap(fmin=3,fmax=7,tmin=tmin,tmax=tmax,vmin=-v,vmax=v,cmap=my_cmap_rev,colorbar=True)
+plt.show()
+
+
+
+tmin = 2.5
+tmax = 26.8
 av_power_pendule.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
 av_power_main.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
 av_power_mainIllusion.plot_topomap(fmin=15,fmax=20,tmin=tmin,tmax=tmax,vmin=-0.2,vmax=0.2,cmap=my_cmap)
@@ -374,3 +386,13 @@ raw_signal.plot(block=True)
 
 avpower_main_moins_mainIllusion.plot_topo(fmax = 30)
 raw_signal.plot(block=True)
+
+
+#========== si on veut afficher au fil du temps le theta
+
+data_pendule_8_30 = np.mean(av_power_pendule.data[11][5:27],axis=0)
+data_main_8_30 = np.mean(av_power_main.data[11][5:27],axis=0)
+
+plt.plot(av_power_pendule.times,data_pendule_8_30,label='pendule')
+plt.plot(av_power_main.times,data_main_8_30,label='main')
+plt.legend()

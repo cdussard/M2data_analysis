@@ -1,20 +1,35 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 28 13:23:17 2023
+Created on Sat Oct 14 16:07:33 2023
 
 @author: claire.dussard
 """
 
-import mne
-
-from functions.load_savedData import *
+import os 
+import seaborn as sns
+import pathlib
 from handleData_subject import createSujetsData
 from functions.load_savedData import *
-import numpy as np
-import os
-import pandas as pd
+from functions.preprocessData_eogRefait import *
+import numpy as np 
+import mne
+
+nom_essai = "4"
+essaisFeedbackSeul = ["pas_enregistre","sujet jeté",
+"4","4","sujet jeté","4","4","4","4","MISSING","4","4",
+"4","4","4","4","4","4","4","4-b","4","4","4","4","4","4"]
+
+# essaisFeedbackSeul = [nom_essai for i in range(25)]
 
 essaisMainSeule,essaisMainIllusion,essaisPendule,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets = createSujetsData()
+sujetsPb = [0,9]
+for sujetpb in sujetsPb:
+    allSujetsDispo.remove(sujetpb)
+liste_rawPathEffetFBseul = createListeCheminsSignaux(essaisFeedbackSeul,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+# plot les NFB a cote des rest
+liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
+liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
 #pour se placer dans les donnees lustre
 os.chdir("../../../../")
@@ -22,24 +37,10 @@ lustre_data_dir = "_RAW_DATA"
 lustre_path = pathlib.Path(lustre_data_dir)
 os.chdir(lustre_path)
 
-liste_rawPathPendule = createListeCheminsSignaux(essaisPendule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
-liste_rawPathMain = createListeCheminsSignaux(essaisMainSeule,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
-liste_rawPathMainIllusion = createListeCheminsSignaux(essaisMainIllusion,listeNumSujetsFinale, allSujetsDispo,SujetsPbNomFichiers,listeDatesFinale,dates)
 
-liste_tfrPendule = load_tfr_data_windows(liste_rawPathPendule,"",True)
-liste_tfrMain = load_tfr_data_windows(liste_rawPathMain,"",True)
-liste_tfrMainIllusion = load_tfr_data_windows(liste_rawPathMainIllusion,"",True)
-
-def copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
-#avoid having to reload from scratch after every ANOVA (instances modified in place)
-    liste_tfr_pendule = []
-    liste_tfr_main = []
-    liste_tfr_mainIllusion = []
-    for tfr_p,tfr_m,tfr_mi in zip(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion):
-        liste_tfr_pendule.append(tfr_p.copy())
-        liste_tfr_main.append(tfr_m.copy())
-        liste_tfr_mainIllusion.append(tfr_mi.copy())
-    return liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion
+liste_tfr_p = load_tfr_data_windows(liste_rawPathEffetFBseul,"pendule",True)
+liste_tfr_m = load_tfr_data_windows(liste_rawPathEffetFBseul,"main",True)
+liste_tfr_mi = load_tfr_data_windows(liste_rawPathEffetFBseul,"mainIllusion",True)
 
 def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
     mode_baseline = 'logratio'
@@ -89,7 +90,7 @@ def data_freq_tTest_perm(elec,fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainI
             tableau_pendule[i][j] = powerFreq_pendule[j]
             tableau_mainIllusion[i][j] = powerFreq_mainI[j]
     return tableau_mainPendule,tableau_mainMainIllusion,tableau_main,tableau_pendule,tableau_mainIllusion
-
+    
 obj_channels=["Fp1","Fp2","F7","F3","Fz","F4","F8","FC5","FC1","FC2","FC6","T7","C3","Cz","C4","T8",
 "CP5","CP1","CP2","CP6","P7","P3","Pz","P4","P8","O1","Oz","O2"]
 liste_pendule = []
@@ -100,14 +101,14 @@ liste_mainIllusion = []
 
 for elec in obj_channels:
     print("ELEC  "+elec)
-    liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
+    liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfr_p,liste_tfr_m,liste_tfr_mi)
     tableau_mainPendule,tableau_mainMainIllusion,tableau_main,tableau_pendule,tableau_mainIllusion = data_freq_tTest_perm(elec,3,84,2.5,25.5,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
     liste_mainIllusion.append(tableau_mainIllusion)
     liste_main.append(tableau_main)
     liste_pendule.append(tableau_pendule)
     
     
-    
+  
 #now get the p values
 def get_pvalue_allElec_allFreq(liste_condition,npermut):
     n_sujets = liste_condition[0].shape[0]
@@ -132,6 +133,8 @@ def get_pvalue_allElec_allFreq(liste_condition,npermut):
             readable_pValue_table[i,j] = p_values[(82*i)+j]    
     return readable_pValue_table
 
+import pandas as pd
+
 readable_pValue_table_pendule =  get_pvalue_allElec_allFreq(liste_pendule,20000)  
 readable_pValue_table_main =  get_pvalue_allElec_allFreq(liste_main,20000)
 readable_pValue_table_mainIllusion =  get_pvalue_allElec_allFreq(liste_mainIllusion,20000) 
@@ -145,7 +148,7 @@ df_pval_pendule = pd.DataFrame(readable_pValue_table_pendule, index=header_col[1
 df_pval_main = pd.DataFrame(readable_pValue_table_main, index=header_col[1:], columns=header_row[1:])
 df_pval_mainIllusion = pd.DataFrame(readable_pValue_table_mainIllusion, index=header_col[1:], columns=header_row[1:])
 
-path = "C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/versionJuin2023_elecFixed/"
+path = "C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/effetFB_elecFixed/"
 
 df_pval_pendule.to_csv(path+"p_pend.csv")
 df_pval_main.to_csv(path+"p_main.csv")
@@ -176,10 +179,11 @@ df_d_mainIllusion = pd.DataFrame(d_mi, index=header_col[1:], columns=header_row[
 df_d_pendule.to_csv(path+"dcohen_pend.csv")
 df_d_main.to_csv(path+"dcohen_main.csv")
 df_d_mainIllusion.to_csv(path+"dcohen_mainIllusion.csv")
+    
+    
 
-
-#check what we get
-path = "C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/versionJuin2023_elecFixed/"
+#DISPLAY
+path = "C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/effetFB_elecFixed/logratio/"
 
 p_pend = pd.read_csv(path+"p_pend.csv").iloc[:, 1:]
 p_main = pd.read_csv(path+"p_main.csv").iloc[:, 1:]

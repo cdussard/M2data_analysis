@@ -181,6 +181,30 @@ def save_ICA_files(liste_ICA,liste_rawPathmodif,windows):
     print("done saving")
     return True
 
+def save_ICA_files_blink(liste_ICA,liste_rawPathmodif,windows):
+    import matplotlib.pyplot as plt
+#Save files sauvegarde ICA liste_rawPathmodif=liste_rawPath[21:24]
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    i=0
+    for ica_to_save in liste_ICA:
+        path_sujet = liste_rawPathmodif[i]
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../ICA/" + path_raccourci_split[0] + "/" 
+        fig = ica_to_save.plot_components(picks=['eeg'], show=False, verbose=False)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            
+        plt.savefig(directory+ path_raccourci_split[3] +"png")#save components picture
+        plt.close(fig)
+        ica_to_save.save(directory+ path_raccourci_split[3][:-1] +"blink-ica.fif",overwrite=True)#save ICA computed
+        i += 1 
+    print("done saving")
+    return True
+
 def load_ICA_files_windows(liste_rawPath,windows):
     liste_ICA = []
     if windows:
@@ -219,6 +243,29 @@ def saveEpochsAfterICA_apresdropBad_windows(listeEpochs,liste_rawPath,windows): 
     print("done saving")
     return True
 
+#save epochs after ICA
+def saveEpochsAfterICA_apresdropBad_windows_blink(listeEpochs,liste_rawPath,windows):    #Save files epochs_ICaises
+    i=0
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    for signal in listeEpochs:
+        if signal is not None:
+            path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
+            path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+            path_raccourci_split = path_raccourci.split(charac_split)
+            directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + "/"
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            signal.save(directory+ path_raccourci_split[3][:-1] +"_blink.fif",overwrite=True)
+        else:
+            print("signal is NONE")
+        i += 1
+            
+    print("done saving")
+    return True
+
 def saveEpochsAfterICA_avantdropBad_windows(listeEpochs,liste_rawPath,windows):    #Save files epochs_ICaises
     i=0
     if windows:
@@ -233,6 +280,25 @@ def saveEpochsAfterICA_avantdropBad_windows(listeEpochs,liste_rawPath,windows): 
         if not os.path.exists(directory):
             os.makedirs(directory)
         signal.save(directory+ path_raccourci_split[3] +"fif",overwrite=True)
+        i += 1
+    print("done saving")
+    return True
+
+
+def saveEpochsAfterICA_avantdropBad_windows_blink(listeEpochs,liste_rawPath,windows):    #Save files epochs_ICaises
+    i=0
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    for signal in listeEpochs:
+        path_sujet = liste_rawPath[i]#attention ne marche que si on a les epochs dans l'ordre
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../EPOCH_ICA_avant_dropBad_avant_averageRef/" + path_raccourci_split[0] + "/"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        signal.save(directory+ path_raccourci_split[3][:-1] +"_blink.fif",overwrite=True)
         i += 1
     print("done saving")
     return True
@@ -330,6 +396,24 @@ def save_elec_fr_data_to_mat(listeAverageTFR,listerawPath,suffixe,doBaseline,bas
     print("done saving")
     return True
 
+
+def load_one_tfr_windows(path_sujet,suffixe):
+    charac_split = "\\"
+    if suffixe != "":
+        suffixe = "-" + suffixe
+    path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+    path_raccourci_split = path_raccourci.split(charac_split)
+    directory = "../AV_TFR/" + path_raccourci_split[0] + "/"
+    print("directory")
+    print(directory)
+    print(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+    if os.path.exists(directory):
+         try:
+             signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+         except OSError as e:
+             print(e.errno)
+    return signal[0]
+    
         
 def load_tfr_data_windows(liste_rawPath,suffixe,windows):
     if windows:
@@ -377,7 +461,7 @@ def load_tfr_data(liste_rawPath,suffixe):
         print(directory)
         if os.path.exists(directory):
             try:
-                signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5")
+                signal =  mne.time_frequency.read_tfrs(directory+ path_raccourci_split[3][:-1] +suffixe+"-tfr.h5",preload=True)
             except OSError as e:
                 print(e.errno)
         else:
@@ -404,6 +488,35 @@ def load_data_postICA_postdropBad_windows(liste_rawPath,suffixe,windows):
         path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
         path_raccourci_split = path_raccourci.split(charac_split)
         directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + '/'
+        #print(directory)
+        print("true : ")
+        print(path_raccourci_split)
+        print(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")
+        if os.path.exists(directory):
+            try:
+                signal = mne.read_epochs(directory+ path_raccourci_split[3][:-1]+suffixe +".fif")
+            except OSError as e:
+                print(e.errno)
+        else:
+            print("sujet "+str(i)+" non traité")
+        liste_signaux_loades.append(signal)
+        i += 1
+    return liste_signaux_loades
+
+def load_data_postICA_postdropBad_windows_blink(liste_rawPath,suffixe,windows):
+    if windows:
+        charac_split = "\\"
+    else:
+        charac_split = "/"
+    if suffixe != "":
+        suffixe = "_" + suffixe
+    liste_signaux_loades = []   
+    i = 0
+    for path in liste_rawPath:
+        path_sujet = liste_rawPath[i]
+        path_raccourci = str(path_sujet)[0:len(str(path_sujet))-4]
+        path_raccourci_split = path_raccourci.split(charac_split)
+        directory = "../EPOCH_ICA_APRES_REF/" + path_raccourci_split[0] + '/'
         print(directory)
         if os.path.exists(directory):
             try:
@@ -423,7 +536,6 @@ def load_data_postICA_preDropbad(liste_rawPath,suffixe,windows):
         charac_split = "/"
     if suffixe != "":
         suffixe = "-" + suffixe
-    import os
     liste_signaux_loades = []   
     i = 0
     for path in liste_rawPath:
@@ -454,7 +566,6 @@ def load_data_postICA_preDropbad_effetFBseul(liste_rawPath,suffixe,windows,avant
         charac_split = "/"
     if suffixe != "":
         suffixe = "-" + suffixe
-    import os
     liste_signaux_loades = []   
     i = 0
     for path in liste_rawPath:
@@ -495,9 +606,7 @@ def discrete_log_cmap(N, base_cmap=None):#marche tres bof
     cmap_name = base.name + str(N)
     return base.from_list(cmap_name, color_list, N)
 
-from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColormap, Normalize, \
-    LogNorm
-import numpy as np
+
 def cmap_discrete(cmap_list):#vole de panda power
 
     cmap_colors = []
