@@ -72,7 +72,7 @@ EpochDataMainIllusion_dropBad = load_data_postICA_preDropbad(rawPath_mainIllusio
 
 #average ref data
 
-
+#WHY IS IT MISSING
 
 #display epochs, chose which to drop
 initial_ref = 'Fz'
@@ -290,10 +290,10 @@ av_power_pendule_2cond.save("../AV_TFR/all_sujets/pendule_2cond-tfr.h5",overwrit
 av_power_main =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/main-tfr.h5")[0]
 av_power_mainIllusion =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/mainIllusion-tfr.h5")[0]
 av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
-
+plt.style.use('dark_background')
 
 def plot_C3_power(powerObject,timesTrial,timesVibration,fmin,fmax,vmin,vmax):
-    fig,axes = plt.subplots()
+    fig,axes = plt.subplots(facecolor='#050519')
     powerObject.plot(picks="C3",fmin=fmin,fmax=fmax,vmin=vmin,vmax=vmax,axes=axes)
     if timesTrial:
         axes.axvline(2, color='green', linestyle='--')
@@ -307,6 +307,9 @@ def plot_C3_power(powerObject,timesTrial,timesVibration,fmin,fmax,vmin,vmax):
         axes.axvline(20.72, color='black', linestyle='--')
         axes.axvline(25.22, color='black', linestyle='--')
         axes.axvline(27.02, color='black', linestyle='--')
+    axes.set_facecolor('#050519')
+    fig.patch.set_facecolor('#050519')
+    axes.set_facecolor('#050519')
     plt.show()
     return fig
 
@@ -323,9 +326,6 @@ raw_signal.plot(block=True)
 #================ Plot C3, Cz, C4 power#=====================================
 #temps frequence
 av_power = av_power_pendule
-# av_power.plot([6], baseline=None, modliste_tfr_mainIllusion = liste_tfr.copy()e='logratio', title=av_power.ch_names[5],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#c3
-# av_power.plot([22], baseline=None, mode='logratio', title=av_power.ch_names[19],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#cz
-# av_power.plot([23], baseline=None, mode='logratio', title=av_power.ch_names[20],tmin=0.,tmax=28.5,vmin=-0.4,vmax=0.4)#c4
 av_power.plot_topo(fmin=15,fmax=20,tmin=tmin,tmax=tmax)#cliquer sur C3,Cz,C4 et sauver graphes
 
 raw_signal.plot(block=True)#debloquer graphes

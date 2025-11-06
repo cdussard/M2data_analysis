@@ -190,6 +190,39 @@ for ep in EpochObs[0:10]:
 raw_signal.plot(block=True)  
 
 
+
+
+fig, axs = plt.subplots(2, 3, figsize=(12, 8), sharey='row')
+# Supprimer les emplacements inutilisés
+fig.delaxes(axs[0, 0])  # Colonne de gauche en haut
+fig.delaxes(axs[0, 2])  # Colonne de droite en haut
+vmax = 0.4
+sensors=True
+
+gd_average_im.plot_topomap(fmin=13,fmax=30,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[0,1],title="13-30Hz",sensors=sensors,cbar_fmt='%0.2f')
+
+gd_average_im.plot_topomap(fmin=8,fmax=12,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,0],colorbar=False,title="8-12Hz",sensors=sensors)
+gd_average_im.plot_topomap(fmin=13,fmax=20,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,1],colorbar=False,title="13-20Hz",sensors=sensors)
+gd_average_im.plot_topomap(fmin=21,fmax=30,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,2],title="21-30Hz",sensors=sensors,cbar_fmt='%0.2f')
+
+plt.tight_layout()
+plt.show()
+
+
+fig, axs = plt.subplots(2, 3, figsize=(12, 8), sharey='row')
+vmax = 0.45
+fig.delaxes(axs[0, 0])  # Colonne de gauche en haut
+fig.delaxes(axs[0, 2])  # Colonne de droite en haut
+sensors =True
+gd_average_exec.plot_topomap(fmin=13,fmax=30,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[0,1],title="13-30Hz",sensors=sensors,cbar_fmt='%0.2f')
+gd_average_exec.plot_topomap(fmin=8,fmax=12,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,0],colorbar=False,title="8-12Hz",sensors=sensors)
+gd_average_exec.plot_topomap(fmin=13,fmax=20,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,1],colorbar=False,title="13-20Hz",sensors=sensors)
+gd_average_exec.plot_topomap(fmin=21,fmax=30,tmin=2.6,tmax=24,vlim=(-vmax,vmax),cmap = my_cmap,axes=axs[1,2],title="21-30Hz",sensors=sensors,cbar_fmt='%0.2f')
+
+plt.tight_layout()
+plt.show()
+
+
 #================================
 liste_epochsPreICA,liste_epochsSignal = pre_process_donnees(liste_rawPathObsExec,1,0.1,90,[50,100],31,'Fz',eventExec,30)#que 2 premiers sujets
 

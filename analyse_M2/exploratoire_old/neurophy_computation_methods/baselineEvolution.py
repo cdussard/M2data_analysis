@@ -31,30 +31,6 @@ event_id_pendule={'Essai_pendule':4}
 event_id_main={'Essai_main':3}  
 
 
-#================================================
-#check data
-# for i in range(23):
-#     print("sujet "+str(i))
-#     print("main")
-#     print(10-len(sujets_epochs_jetes_main[i])==len(EpochDataMain[i]))
-#     print("pendule")
-#     print(10-len(sujets_epochs_jetes_pendule[i])==len(EpochDataPendule[i]))
-#     print("mainIllusion")
-#     print(10-len(sujets_epochs_jetes_mainIllusion[i])==len(EpochDataMainIllusion[i]))
-#     print("\n")
-# #sujets PB = 6&10 (4&8)
-# for i in [4,8]:
-#     print("sujet "+str(i))
-#     print("main")
-#     print(10-len(sujets_epochs_jetes_main[i]))
-#     print(len(EpochDataMain[i]))
-#     print("mainIllusion")
-#     print(10-len(sujets_epochs_jetes_mainIllusion[i]))
-#     print(len(EpochDataMainIllusion[i]))
-    
-
-#============================================
-
 EpochDataMain = load_data_postICA_postdropBad_windows(liste_rawPathMain,"",True)
 EpochDataPendule = load_data_postICA_postdropBad_windows(liste_rawPathPendule,"",True)
 EpochDataMainIllusion = load_data_postICA_postdropBad_windows(liste_rawPathMainIllusion,"",True)
@@ -133,12 +109,10 @@ def return_beta_values_meanRun(liste_beta_values,epochsDispo):
     array_tous_essais = np.empty((1,10), dtype=float)
     for j in range(1,11):
         if j in epochsDispo:
-            #print("yes")
             index_essai = epochsDispo.index(j)#trouver ou est la valeur
             #print(index_essai)
             array_tous_essais[:,j-1] = liste_beta_values[index_essai]
         else:
-            #print("no")
             array_tous_essais[:,j-1] = None
     for i in range(1,6):
         print("i = "+str(i))
@@ -247,30 +221,8 @@ def get_matrix_essais_BL(nbSujets):
         array_tousSujets_essais_main[i,:] = array_tous_essais_main
         array_tousSujets_essais_mainIllusion[i,:] = array_tous_essais_mainIllusion
         array_tousSujets_essais_pendule[i,:] = array_tous_essais_pendule
-        # for essai in range(1,6):
-        #     print("essai "+str(essai))
-        #     # if essai in num_essaisDispos_m:
-        #     #     print(epochs_moyennes_m)
-        #     #     print("i :"+str(i))
-        #     #     array_essai_main[i][essai-1] = epochs_moyennes_m[num_essaisDispos_m.index(essai)]
-        #     # else:
-        #     #     array_essai_main[i][essai-1] = -1
-        #     if essai in num_essaisDispos_mi:
-        #         print(epochs_moyennes_mi)
-        #         print("i :"+str(i))
-        #         print(epochs_moyennes_mi[num_essaisDispos_mi.index(essai)])#nan
-        #         array_essai_mainIllusion[i][essai-1] = epochs_moyennes_mi[num_essaisDispos_mi.index(essai)]#pb : 5 a index 4
-        #     else : 
-        #         array_essai_mainIllusion[i][essai-1] = -1
-        #     # if essai in num_essaisDispos_p:
-        #     #     print(epochs_moyennes_p)
-        #     #     print("i :"+str(i))
-        #     #     array_essai_pendule[i][essai-1] = epochs_moyennes_p[num_essaisDispos_p.index(essai)]
-        #     # else : 
-        #     #     array_essai_pendule[i][essai-1] = -1
                 
     return array_tousSujets_essais_pendule,array_tousSujets_essais_mainIllusion,array_tousSujets_essais_main
-                #array_essai_main,array_essai_mainIllusion,array_essai_pendule,
 
 array_tousSujets_essais_pendule,array_tousSujets_essais_mainIllusion,array_tousSujets_essais_main =\
     get_matrix_essais_BL(23)#23
@@ -284,9 +236,6 @@ pd.DataFrame(array_tousSujets_essais_main).to_csv("../csv_files/tousEssais_main.
 pd.DataFrame(array_essai_pendule).to_csv("../csv_files/meanEssais_pendule.csv")
 pd.DataFrame(array_essai_mainIllusion).to_csv("../csv_files/meanEssais_mainIllusion.csv")
 pd.DataFrame(array_essai_main).to_csv("../csv_files/meanEssais_main.csv")
-
-
-
 
 
 

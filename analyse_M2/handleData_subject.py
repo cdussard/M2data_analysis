@@ -119,36 +119,3 @@ def createSujetsData_obsExec():
 
     return essaisObsExecIm,listeNumSujetsFinale,allSujetsDispo,listeDatesFinale,SujetsPbNomFichiers,dates,seuils_sujets
      
-# =========================test donnees sur 1 sujet=============================================================================
-# num_sujet = 19
-# sample_data_loc = listeNumSujetsFinale[num_sujet]+"/"+listeDatesFinale[num_sujet]+"/eeg"
-# sample_data_dir = pathlib.Path(sample_data_loc)
-# date_nom_fichier = dates[num_sujet][-4:]+"-"+dates[num_sujet][3:5]+"-"+dates[num_sujet][0:2]
-# raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + "_7-2-b.vhdr")
-
-# raw_signal = mne.io.read_raw_brainvision(raw_path_sample,preload=False,eog=('HEOG', 'VEOG'))
-
-# raw_signal.plot(block=True)#,event_id=event_dict)
-# print(raw_signal.info)
-# events = mne.events_from_annotations(raw_signal)
-# #get events
-# event_dict = {
-#         'debut trial':4,
-#         'fin du trial':6,
-#         'exp start':10,
-#         'croix debut':12,
-#         'fin croix':14,
-#         'instruction imaginer':18,
-#         'instruction repos':19,
-#         'mvt main':22, 
-#         'debut FB':27,
-#         #'aucune idee':240,
-#         'start':99999,}
-
-#         #'OV start':255}
-
-# raw_signal.plot(events[0],block=True)#,event_id=event_dict)#il les affiche par dessus :')
-
-# afficher les events
-# mne.viz.plot_events(events[0], sfreq=raw_signal.info['sfreq'],first_samp=raw_signal.first_samp, event_id = event_dict)   
-

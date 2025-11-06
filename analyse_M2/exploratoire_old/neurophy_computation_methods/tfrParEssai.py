@@ -52,27 +52,21 @@ jetes_mainIllusion = [
     ]
 
 def compute_condition_power(i,liste_raw,essaisJetes,freqs,n_cycles):
-    print("je suis compute_condition_power")
     epochs_sujet = load_indivEpochData(i,liste_raw)
     print(epochs_sujet)
     print("downsampling...") #decim= 5 verifier si resultat pareil qu'avec down sampling
     epochs_sujet = epochs_sujet.resample(250., npad='auto') 
     print("computing power...")
     power_sujet = mne.time_frequency.tfr_morlet(epochs_sujet,freqs=freqs,n_cycles=n_cycles,return_itc=False,average=False)#AVERAGE = FALSE : 1 par essai
-    # del epochs_sujet
-    # gc.collect()
     return power_sujet
 
 def plot_condition_power(power_sujet,num_ax,essaisJetes,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap,fig):
-    print("je suis plot_condition_power")
     delta = 0  
     print("essais jetes plot")
     print(essaisJetes)
     for i in range(10):
         if i+1 not in essaisJetes:#gerer les epochs jetes dans l'affichage
             power_sujet[i-delta].average().plot_topomap(baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,tmin=2,tmax=25,axes=axs[num_ax,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
-            #power_sujet[i-delta].average().plot(picks=["C3"],baseline=baseline,mode=mode,fmin=freqMin,fmax=freqMax,axes=axs[num_ax,i],vmin=vmin,vmax=vmax,cmap=my_cmap)
-            #plot_elec_cond(power_sujet[i-delta],"C3","who",11,np.arange(3, 85, 1),fig,axs[num_ax,i],None,None,1.5,26.5,3,40,"blue",None)
         else:
             print("essai jete num"+str(i+1))
             delta += 1
@@ -118,11 +112,6 @@ def get_30essais_sujet_i(num_sujet,freqMin,freqMax,pasFreq,essaisJetes_main_suje
    
     fig.suptitle('Sujet n°'+str(num_sujet_reel), fontsize=16)
     return fig
-
-# get_30essais_sujet_i(num_sujet=22,freqMin=3,freqMax=85,pasFreq=1,
-#                      sujets_epochs_jetes_main=jetes_main,sujets_epochs_jetes_mainIllusion=jetes_mainIllusion,sujets_epochs_jetes_pendule=jetes_pendule)
-# raw_signal.plot(block=True)
-
 
 
 figs_stock = []
@@ -238,53 +227,3 @@ raw_path_sample = sample_data_dir/("BETAPARK_"+ date_nom_fichier + "_7-2-b.vhdr"
 raw_signal = mne.io.read_raw_brainvision(raw_path_sample,preload=False,eog=('HEOG', 'VEOG'))
 
 raw_signal.plot(block=True)
-
-#diagnose memory leak
-# import tracemalloc
-# tracemalloc.start(10)
-# get_30essais_sujet_i(num_sujet=7,freqMin=8,freqMax=30,pasFreq=1,
-#                       essaisJetes_main_sujet=jetes_main[7],essaisJetes_mainIllusion_sujet=jetes_mainIllusion[7],essaisJetes_pendule_sujet=jetes_pendule[7])
-# snapshot = tracemalloc.take_snapshot()  
-# top_stats = snapshot.statistics('lineno')
-
-# print("[ Top 10 ]")
-# for stat in top_stats[:10]:
-#     print(stat) 
-# top_n(25, snapshot, trace_type='filename')
-    
-# def collect_stats(self):        
-#     self.snapshots.append(tracemalloc.take_snapshot())        
-#     if len(self.snapshots)>1: 
-#         stats = self.snapshots[-1].filter_traces(filters).compare_to(self.snapshots[-2], 'filename')    
-
-# for stat in stats[:10]:                
-#     print("{} new KiB {} total KiB {} new {} total memory blocks: ".format(stat.size_diff/1024, stat.size / 1024, stat.count_diff ,stat.count))                
-# for line in stat.traceback.format():                    
-#     print(line)
-
-# def plot_all_conditions_power(freqMin,freqMax,tmin,tmax,vmin,vmax,my_cmap,essaisJetes_main_sujet,essaisJetes_mainIllusion_sujet,essaisJetes_pendule_sujet,liste_rawPathPendule,liste_rawPathMain,liste_rawPathMainIllusion):
-#     fig,axs = plt.subplots(3,10)
-#     dureePreBaseline = 3 #3
-#     dureePreBaseline = - dureePreBaseline
-#     dureeBaseline = 2.0 #2.0
-#     valeurPostBaseline = dureePreBaseline + dureeBaseline
-#     baseline = (dureePreBaseline, valeurPostBaseline)
-#     mode = 'zscore'    
-#     freqs = np.arange(3, 85, 1)
-#     n_cycles = freqs 
-#     power_sujet_pendule = compute_condition_power(i,liste_rawPathPendule,essaisJetes_pendule_sujet,freqs,n_cycles)
-#     plot_condition_power(power_sujet_pendule,0,essaisJetes_pendule_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
-    
-#     #main
-#     power_sujet_main = compute_condition_power(i,liste_rawPathMain,essaisJetes_main_sujet,freqs,n_cycles)
-#     plot_condition_power(power_sujet_main,1,essaisJetes_main_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
-
-#     #mainIllusion
-#     power_sujet_mainIllusion = compute_condition_power(i,liste_rawPathMainIllusion,essaisJetes_mainIllusion_sujet,freqs,n_cycles)
-#     plot_condition_power(power_sujet_mainIllusion,2,essaisJetes_mainIllusion_sujet,baseline,mode,freqMin,freqMax,tmin,tmax,axs,vmin,vmax,my_cmap)
-#     return fig,axs
-#     #avoid memory leakage
-        
-
-    
-

@@ -224,53 +224,6 @@ av_power_main.plot(picks="Cz",vmin = -0.26,vmax = 0.26)
 av_power_mainIllusion.plot(picks="Cz",vmin = -0.26,vmax = 0.26)
 raw_signal.plot(block=True)
 
-#sur les 28 electrodes
-def data_freq_tTest_perm_allElec(fmin,fmax,tmin,tmax,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
-    nbElecs = 28
-    mode_baseline = 'logratio'
-    baseline = (-3,-1)
-    #compute baseline (first because after we crop time)
-    for tfr_m,tfr_mi,tfr_p in zip(liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule):
-        tfr_m.apply_baseline(baseline=baseline, mode=mode_baseline, verbose=None)
-        tfr_mi.apply_baseline(baseline=baseline, mode=mode_baseline, verbose=None)
-        tfr_p.apply_baseline(baseline=baseline, mode=mode_baseline, verbose=None)
-    #crop time & frequency
-    for tfr_mainI,tfr_main,tfr_pendule in zip(liste_tfr_mainIllusion,liste_tfr_main,liste_tfr_pendule):
-        tfr_mainI.crop(tmin = tmin,tmax=tmax,fmin = fmin,fmax = fmax)
-        tfr_main.crop(tmin = tmin,tmax=tmax,fmin = fmin,fmax = fmax)
-        tfr_pendule.crop(tmin = tmin,tmax=tmax,fmin = fmin,fmax = fmax)
-    #do not subset electrodes
-    #create ANOVA table "faire evoluer pour plusieurs elecs a la fois
-    tableau_main = np.empty(shape=(23*nbElecs,(fmax-fmin+1)*nbElecs))
-    tableau_pendule = np.empty(shape=(23*nbElecs,(fmax-fmin+1)*nbElecs))
-    tableau_mainIllusion = np.empty(shape=(23*nbElecs,(fmax-fmin+1)*nbElecs))
-    for i in range(23):#sujets
-        print("sujet"+str(i))
-        #ne pas ecraser forme electrodes
-        #pool time
-        print(liste_tfr_pendule[i].data.shape)
-        powerFreq_pendule = np.median(liste_tfr_pendule[i].data,axis=2)#
-        powerFreq_main = np.median(liste_tfr_main[i].data,axis=2)
-        powerFreq_mainI = np.median(liste_tfr_mainIllusion[i].data,axis=2)
-        print(powerFreq_main.flatten().shape)
-        print(tableau_main[i].shape)#ne pas flatten sinon on perd les frequences ??
-        print("yo")
-        #print(yo)
-        #print(yo.shape)
-        #CA MARCHE PAS MAIS CELUI ELEC PAR ELEC CA MARCHE
-        tableau_main[i] = np.append(tableau_main[i],powerFreq_main.flatten())
-        tableau_pendule[i] = np.append(tableau_pendule[i],powerFreq_pendule.flatten())
-        tableau_mainIllusion[i] = np.append(tableau_mainIllusion[i],powerFreq_mainI.flatten())
-    return tableau_main,tableau_pendule,tableau_mainIllusion
- 
-
-liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule,liste_tfrMain,liste_tfrMainIllusion)
-tableau_main,tableau_pendule,tableau_mainIllusion = data_freq_tTest_perm_allElec(3,84,2.5,26.8,liste_tfr_main,liste_tfr_mainIllusion,liste_tfr_pendule)
-
-#refait pour tmax=25.5s
-liste_tfr_pendule,liste_tfr_main,liste_tfr_mainIllusion = copy_three_tfrs(liste_tfrPendule[0:1],liste_tfrMain[0:1],liste_tfrMainIllusion[0:1])
-tableau_main,tableau_pendule,tableau_mainIllusion = data_freq_tTest_perm_allElec(3,84,2.5,25.5,liste_tfr_main[0:1],liste_tfr_mainIllusion[0:1],liste_tfr_pendule[0:1])
-#ça marche pas ?
 
 #nouvel essai pas opti du tout MAIS QUI MARCHE
 av_power_pendule =  mne.time_frequency.read_tfrs("../AV_TFR/all_sujets/pendule-tfr.h5")[0]
@@ -345,15 +298,12 @@ d_mi = get_dcohen_allElec_allFreq(liste_mainIllusion)
 np.savetxt('../csv_files/dcohen_allElec_allFreq_pendule_fenetreModif.csv',d_p,delimiter=",")
 np.savetxt('../csv_files/dcohen_allElec_allFreq_main_fenetreModif.csv',d_m,delimiter=",")
 np.savetxt('../csv_files/dcohen_allElec_allFreq_mainIllusion_fenetreModif.csv',d_mi,delimiter=",")
-#save en txt en loadant avec libreOffice?
+
 import numpy as np 
 import pandas as pd
-# mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_mIll.txt", delimiter="\t")
-# main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_main.txt", delimiter="\t")
-# pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_pendule.txt", delimiter="\t")
-mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_mIll.csv",header=None,delimiter=";")
-main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_main.csv",header=None,delimiter=";")
-pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_pendule.csv",header=None,delimiter=";")
+mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_mIll.csv",header=None,delimiter=";")
+main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_main.csv",header=None,delimiter=";")
+pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/dcohen_pendule.csv",header=None,delimiter=";")
 
 
 
@@ -365,24 +315,16 @@ imagesc.plot(mIll,cmap="Blues")
 raw_signal.plot(block=True)
 
 #creer le mask
-# p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_pend.txt")
-# p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_main.txt")
-# p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/again/pvalue_mIll.txt")
-# p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_pend.csv",header=None)
-# p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_main.csv",header=None)
-# p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/again/pvalue_mainIllusion.csv",header=None)
-p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_pend.csv",header=None)
-p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_main.csv",header=None)
-p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_mIll.csv",header=None)
 
-# p_pend = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_pend.txt")
-# p_main = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_main.txt")
-# p_mIll = np.loadtxt("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/refait_25/pvalue_mainIllusion.txt")
+p_pend = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_pend.csv",header=None)
+p_main = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_main.csv",header=None)
+p_mIll = pd.read_csv("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/refait_25/p_mIll.csv",header=None)
+
 p_pend = p_pend.to_numpy()
 p_main = p_main.to_numpy()
 p_mIll = p_mIll.to_numpy()
 
-legends = pd.read_excel("C:/Users/claire.dussard/OneDrive - ICM/Bureau/rdom_scriptsData/allElecFreq_VSZero/pvalue/pvalueperm_allElec_allFreq_main.xlsx")
+legends = pd.read_excel("C:/Users/claire.dussard/OneDrive - ICM/Bureau/old_papers/rdom_scriptsData/allElecFreq_VSZero/pvalue/pvalueperm_allElec_allFreq_main.xlsx")
 elec_leg = legends["channel\\freq"]
 imagesc.plot(p_pend)
 imagesc.plot(p_main)

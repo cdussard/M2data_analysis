@@ -36,15 +36,6 @@ import numpy as np
 import warnings
 
 
-# MYFITFUN(lambda,t,y) returns the error between the data and the values
-# computed by the current function of lambda.
-#
-# MYFITFUN assumes a function of the form
-#
-#   y =  + c(1) + c(2) / t^lambda
-#
-# with linear parameters c(i) and nonlinear parameter lambda.
-
 
 def minimize_fuc1(lambd, f, y):
     a = ones([len(f), 2])

@@ -31,7 +31,6 @@ def load_indivEpochData(index_sujet,liste_rawPath):
         epoch_sujet.set_montage(montageEasyCap)
     return epoch_sujet
 def compute_condition_power_runs(i,liste_raw,freqs,n_cycles):
-    print("je suis compute_condition_power")
     epochs_sujet = load_indivEpochData(i,liste_raw)
     epochs_sujet.pick_channels(["C3"])
     print(epochs_sujet)

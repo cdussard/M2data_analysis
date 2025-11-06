@@ -65,16 +65,6 @@ for j in range(1):
     s = 0
     for i in range(j,j+2):
         n_bursts_m,dur_burst_m = compute_stats_bursts(f_range,elec,EpochDataMain,True,i,1.5,26)
-        #n_bursts_p,dur_burst_p = compute_stats_bursts(f_range,elec,EpochDataPendule,True,i,1.5,26)
-        # plt.plot(range(len(n_bursts_m)),n_bursts_m,label="n_bursts_main"+str(i),color="g",ls=ls_styles[s])
-        # plt.plot(range(len(n_bursts_p)),n_bursts_p,label="n_bursts_pendule"+str(i),color="r",ls=ls_styles[s])
-        # plt.axhline(np.mean(n_bursts_m),color="g",ls=ls_styles[s])
-        # plt.axhline(np.mean(n_bursts_p),color="r",ls=ls_styles[s])
-        # plt.legend()
-        # print(np.mean(n_bursts_m))
-        # print(np.mean(n_bursts_p))
-        # print(np.mean(dur_burst_m))
-        # print(np.mean(dur_burst_p))
         s += 1
     raw_signal.plot(block=True)
 

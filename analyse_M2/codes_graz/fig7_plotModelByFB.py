@@ -79,5 +79,7 @@ fmax = 4
 fig, axs = plt.subplots(1,3, sharey=True,sharex=True, figsize=(14, 7),constrained_layout=True)
 plot_topomapV3(fmin,fmax,est_perf_p,vmin,vmax,my_cmap,axs,0)
 plot_topomapV3(fmin,fmax,est_perf_m,vmin,vmax,my_cmap,axs,1)
-plot_topomapV3(fmin,fmax,est_perf_mv,vmin,vmax,my_cmap,axs,2)
+im = plot_topomapV3(fmin,fmax,est_perf_mv,vmin,vmax,my_cmap,axs,2)
+fig.colorbar(im, location = 'right', shrink=0.5)
+
 # plot_topomapV3(fmin,fmax,est_perf_mvib,vmin,vmax,my_cmap,axs,3)
